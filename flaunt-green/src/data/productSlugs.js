@@ -1,0 +1,63 @@
+// Single source of truth for product slugs.
+// When adding products to the store, add the slug here.
+// generateStaticParams() in [slug]/page.js imports this automatically.
+
+export const PRODUCT_SLUGS = [
+  // ── Her ──
+  "triangle-dress",
+  "pheran-dress",
+  "icicle-trousers",
+  "flared-pants",
+  "two-way-skirt",
+  "cowl-top-1",
+  "cowl-top-2",
+  "pheran-necktie-top",
+  "stormguard-top",
+  "asymmetric-stupa-shirt",
+  "reversible-shacket-1",
+  "khadi-blazer",
+  "notched-stormguard-coat",
+  "reversible-shacket-2",
+  "womens-scarf",
+  // ── Pristine (additional pieces) ──
+  "colour-blocked-shirt",
+  "icicles-shirt",
+  "pheran-half-sleeved-shirt",
+  "boxy-suit-jacket",
+  "fitted-suit-jacket",
+  "khadi-biker-jacket",
+  "tapered-trousers",
+  "unisex-scarf",
+  "tie",
+  // ── Her (E.K.A.M.) ──
+  "empathy-tee",
+  "karma-tee",
+  "ahimsa-tee",
+  "moksha-tee",
+  // ── Him ──
+  "cotton-kurta",
+  "linen-shirt",
+  "henley-tee",
+  "oversized-tee",
+  "camp-collar-shirt",
+  "relaxed-trousers",
+  "chinos",
+  "drawstring-shorts",
+  "structured-blazer",
+  "quilted-jacket",
+  "windbreaker",
+  "overcoat",
+  "mens-scarf",
+  "canvas-belt",
+  "tote-bag",
+  "cap",
+  "pocket-square",
+  "cufflinks",
+  // ── Dog Togs ──
+  "skippers-shirt",
+  "hatch-coat",
+  "sailors-shirt",
+  "high-tide-coat",
+  "reversible-lehenga-dress",
+  "reversible-bandhgala",
+];

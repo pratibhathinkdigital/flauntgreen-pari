@@ -1,0 +1,99 @@
+
+> flontgreen-ecommerce@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, using available port 3001 instead.
+   ▲ Next.js 15.3.8
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.25:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1939ms
+ ○ Compiling /her/topwear ...
+ ✓ Compiled /her/topwear in 10.2s (1142 modules)
+ GET /her/topwear/ 200 in 11121ms
+ ✓ Compiled in 1309ms (482 modules)
+ ✓ Compiled in 136ms (468 modules)
+
+> flontgreen-ecommerce@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.8
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.21:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1800ms
+ ○ Compiling /collections/ekam ...
+ ✓ Compiled /collections/ekam in 8.4s (1878 modules)
+ GET /collections/ekam/ 200 in 9153ms
+ ✓ Compiled in 1052ms (842 modules)
+ ✓ Compiled in 152ms (828 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1718ms (2049 modules)
+ GET / 200 in 2425ms
+ ✓ Compiled /[...slug] in 405ms (1988 modules)
+ ⨯ [Error: Cannot find module './vendor-chunks/axios.js'
+Require stack:
+- D:\Flauntgreen\.next\server\webpack-runtime.js
+- D:\Flauntgreen\.next\server\app\(shop)\[...slug]\page.js
+- D:\Flauntgreen\node_modules\next\dist\server\require.js
+- D:\Flauntgreen\node_modules\next\dist\server\load-components.js
+- D:\Flauntgreen\node_modules\next\dist\build\utils.js
+- D:\Flauntgreen\node_modules\next\dist\server\dev\static-paths-worker.js
+- D:\Flauntgreen\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/_next/static/css/app/layout.css'
+}
+ ⨯ [Error: Cannot find module './vendor-chunks/axios.js'
+Require stack:
+- D:\Flauntgreen\.next\server\webpack-runtime.js
+- D:\Flauntgreen\.next\server\app\(shop)\[...slug]\page.js
+- D:\Flauntgreen\node_modules\next\dist\server\require.js
+- D:\Flauntgreen\node_modules\next\dist\server\load-components.js
+- D:\Flauntgreen\node_modules\next\dist\build\utils.js
+- D:\Flauntgreen\node_modules\next\dist\server\dev\static-paths-worker.js
+- D:\Flauntgreen\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/_next/static/css/app/layout.css'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1800ms (2322 modules)
+ GET /_next/static/chunks/main-app.js?v=1789967466505 500 in 3274ms
+ GET /_next/static/css/app/layout.css?v=1789967466505 500 in 3305ms
+ ⨯ [Error: Cannot find module './vendor-chunks/axios.js'
+Require stack:
+- D:\Flauntgreen\.next\server\webpack-runtime.js
+- D:\Flauntgreen\.next\server\app\(shop)\[...slug]\page.js
+- D:\Flauntgreen\node_modules\next\dist\server\require.js
+- D:\Flauntgreen\node_modules\next\dist\server\load-components.js
+- D:\Flauntgreen\node_modules\next\dist\build\utils.js
+- D:\Flauntgreen\node_modules\next\dist\server\dev\static-paths-worker.js
+- D:\Flauntgreen\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/_next/static/chunks/app-pages-internals.js'
+}
+ ⨯ [Error: Cannot find module './vendor-chunks/axios.js'
+Require stack:
+- D:\Flauntgreen\.next\server\webpack-runtime.js
+- D:\Flauntgreen\.next\server\app\(shop)\[...slug]\page.js
+- D:\Flauntgreen\node_modules\next\dist\server\require.js
+- D:\Flauntgreen\node_modules\next\dist\server\load-components.js
+- D:\Flauntgreen\node_modules\next\dist\build\utils.js
+- D:\Flauntgreen\node_modules\next\dist\server\dev\static-paths-worker.js
+- D:\Flauntgreen\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/_next/static/chunks/app-pages-internals.js'
+}
+ GET /_next/static/chunks/app/layout.js 500 in 1365ms
+ GET /_next/static/chunks/app-pages-internals.js 500 in 1370ms
