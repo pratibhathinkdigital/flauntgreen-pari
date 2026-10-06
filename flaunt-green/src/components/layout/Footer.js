@@ -1,11 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
 import { FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
-import { settingsApi } from "@/services/api";
 
 const footerLinks = [
   {
@@ -28,7 +24,6 @@ const footerLinks = [
   {
     heading: "Support",
     links: [
-      { label: "Contact Us", href: "/contact" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms & Conditions", href: "/terms" },
       { label: "Shipping Policy", href: "/shipping" },
@@ -37,37 +32,25 @@ const footerLinks = [
   },
 ];
 
+const contactItems = [
+  { icon: FaEnvelope, label: "support@flauntgreen.in", href: "mailto:support@flauntgreen.in" },
+  { icon: FaPhone, label: "+91 7710030888", href: "tel:+917710030888" },
+  { icon: FaMapMarkerAlt, label: "Mumbai, India", href: "/location" },
+];
+
+const socials = [
+  { icon: MessageCircle, href: "#", label: "WhatsApp" },
+  { icon: Facebook, href: "https://www.facebook.com/share/1Yu472FNV1/", label: "Facebook" },
+  { icon: Linkedin, href: "https://www.linkedin.com/company/flauntgreen/", label: "LinkedIn" },
+  { icon: Instagram, href: "https://www.instagram.com/flauntgreen?igsh=NnRhcWdsNmlramFs&igsi=NnRhcWdsNmlramFs", label: "Instagram" },
+];
+
 export default function Footer() {
-  const [settings, setSettings] = useState({
-    support_email: "support@flauntgreen.in",
-    support_phone: "+91 7710030888",
-    store_address: "Mumbai, India",
-  });
-
-  useEffect(() => {
-    settingsApi.getAll().then((res) => {
-      if (res.data) setSettings(res.data);
-    }).catch(console.error);
-  }, []);
-
-  const dynamicContactItems = [
-    { icon: FaEnvelope, label: settings.support_email || "support@flauntgreen.in", href: `mailto:${settings.support_email}` },
-    { icon: FaPhone, label: settings.support_phone || "+91 7710030888", href: `tel:${settings.support_phone}` },
-    { icon: FaMapMarkerAlt, label: settings.store_address || "Mumbai, India", href: "/location" },
-  ];
-
-  const socials = [
-    { icon: MessageCircle, href: "#", label: "WhatsApp" },
-    { icon: Facebook, href: "https://www.facebook.com/share/1Yu472FNV1/", label: "Facebook" },
-    { icon: Linkedin, href: "https://www.linkedin.com/company/flauntgreen/", label: "LinkedIn" },
-    { icon: Instagram, href: "https://www.instagram.com/flauntgreen?igsh=NnRhcWdsNmlramFs&igsi=NnRhcWdsNmlramFs", label: "Instagram" },
-  ];
-
   return (
-    <footer className="relative overflow-hidden" style={{ backgroundColor: "#F5EFE4" }}>
+    <footer className="relative overflow-hidden" style={{ backgroundColor: "#03153D" }}>
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <Image
-          src="/assets/footer_image.svg"
+          src="/assets/footer_image1.svg"
           alt=""
           fill
           className="object-cover object-bottom w-full h-full"
@@ -89,7 +72,7 @@ export default function Footer() {
                 priority
               />
             </Link>
-            <p className="mt-[18px] text-sm leading-relaxed" style={{ color: "#5C584D" }}>
+            <p className="mt-[18px] text-sm leading-relaxed" style={{ color: "#D6D9E0" }}>
               Sustainably Crafted. Timeless Fashion.
             </p>
             <div className="flex items-center gap-3 mt-5">
@@ -109,7 +92,7 @@ export default function Footer() {
           {/* Link Columns */}
           {footerLinks.map(({ heading, links }) => (
             <div key={heading} className="col-span-1">
-              <h3 className="text-base font-bold mb-[18px]" style={{ color: "#1C2A3A" }}>
+              <h3 className="text-base font-bold mb-[18px]" style={{ color: "#F5EFE4" }}>
                 {heading}
               </h3>
               <ul className="flex flex-col gap-[16px]">
@@ -117,7 +100,7 @@ export default function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-[14px] font-[400] text-[#5C584D] transition-colors duration-[250ms] hover:text-[var(--gold)] focus-visible:text-[var(--gold)]"
+                      className="text-[14px] font-[400] text-[#D6D9E0] transition-colors duration-[250ms] hover:text-[var(--gold)] focus-visible:text-[var(--gold)]"
                     >
                       {link.label}
                     </Link>
@@ -130,15 +113,15 @@ export default function Footer() {
           {/* Contact Column */}
           <div className="col-span-1 flex flex-col xl:items-end">
             <div className="w-fit text-left">
-              <h3 className="text-base font-bold mb-[18px]" style={{ color: "#1C2A3A" }}>
+              <h3 className="text-base font-bold mb-[18px]" style={{ color: "#F5EFE4" }}>
                 Contact
               </h3>
               <ul className="flex flex-col gap-[16px]">
-                {dynamicContactItems.map(({ icon: Icon, label, href }) => (
+                {contactItems.map(({ icon: Icon, label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="inline-flex items-center gap-2 text-[14px] font-[400] text-[#5C584D] transition-colors duration-[250ms] hover:text-[var(--gold)] focus-visible:text-[var(--gold)]"
+                      className="inline-flex items-center gap-2 text-[14px] font-[400] text-[#D6D9E0] transition-colors duration-[250ms] hover:text-[var(--gold)] focus-visible:text-[var(--gold)]"
                     >
                       <Icon
                         size={16}
@@ -155,7 +138,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Row */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-x-8 gap-y-4 xl:gap-x-14 border-t border-gray-300 mt-10 pt-5 items-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-x-8 gap-y-4 xl:gap-x-14 border-t border-white/20 mt-10 pt-5 items-center">
           <p className="col-span-2 md:col-span-2 xl:col-span-2 text-xs" style={{ color: "#8C8C8C" }}>
             &copy; 2026 Flaunt Green. All rights reserved.
           </p>

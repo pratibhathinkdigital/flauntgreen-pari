@@ -61,7 +61,6 @@ export const sustainabilityStrip = {
   heading: "Sustainability",
   subheading: "Leaving a sustainable footprint…",
   items: [
-    { label: "Our Mission" },
     { label: "Slow Fashion Guide" },
     { label: "Our Materials" },
     { label: "FG Impact" },

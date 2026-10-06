@@ -47,8 +47,7 @@ export default function WafflesStory() {
           <div className="waffles-text">
             <p>
               So here&apos;s the thing. One day, my humans looked at me and said,
-              &ldquo;Waffles, you deserve better than a ratty old sweater from the
-              pet store.&rdquo; And I said, &ldquo;Woof.&rdquo; Which obviously
+              &ldquo;Waffles, you deserve better than a polyester garment from the pet store.&rdquo; And I said, &ldquo;Woof.&rdquo; Which obviously
               means, &ldquo;You&apos;re absolutely right.&rdquo;
             </p>
             <p>
@@ -59,14 +58,12 @@ export default function WafflesStory() {
               during Diwali and breezy during beach trips.
             </p>
             <p>
-              So my humans started Flaunt Green&apos;s Dog Togs line — sustainable,
-              breathable, and honestly? Pretty stylish if I do say so myself.
+              So my humans started Flaunt Green&apos;s Dog Togs line - sustainable, breathable, easy to play in, and honestly? Pretty stylish if I do say so myself.
               Every piece is made from organic and natural fabrics, because
               why should humans have all the fun?
             </p>
             <p>
-              From festive bandanas to resort-ready vests, every Dog Togs
-              outfit is designed to make your pup look good and feel
+              From festive outfits to play-date ready, each Dog Togs outfit is designed to make your pup look good and feel
               comfortable. No itchy seams. No scratchy tags. Just pure,
               tail-wagging comfort.
             </p>

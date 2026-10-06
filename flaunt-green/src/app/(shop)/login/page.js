@@ -3,14 +3,11 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Loader2, AlertCircle, Leaf } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { authApi } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import toast from "react-hot-toast";
 import NewsletterSection from "@/components/sections/NewsletterSection";
-
-const inputCls = "w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#997b47] focus:ring-1 focus:ring-[#997b47] transition-colors text-[#1C2A3A] text-sm bg-white";
-const inputErrCls = "w-full px-4 py-3 rounded-lg border border-red-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-400 transition-colors text-[#1C2A3A] text-sm bg-white";
 
 function LoginForm() {
   const router = useRouter();
@@ -73,113 +70,107 @@ function LoginForm() {
     }
   };
 
+  const inputCls = "w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-colors text-[#1C2A3A]";
+  const inputErrCls = "w-full px-4 py-3 rounded-lg border border-red-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-400 transition-colors text-[#1C2A3A]";
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1 flex items-center justify-center py-16 px-4 bg-[#F5F1E8]">
-        <div className="w-full max-w-[450px]">
+        <div className="w-full max-w-[450px] bg-white rounded-xl shadow-soft p-8 md:p-10 border border-slate-100">
+          <h1 
+            className="text-center mb-8 font-bold"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(28px, 4vw, 36px)",
+              color: "#1C2A3A",
+            }}
+          >
+            Login
+          </h1>
 
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-1.5 mb-4">
-              <Leaf className="w-5 h-5 text-[#41542f]" />
-              <span className="text-lg font-bold tracking-tight" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif" }}>
-                Flaunt<span className="text-[#997b47]">Green</span>
-              </span>
+          {/* Server Error */}
+          {serverError && (
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div>
+                {serverError}
+                {needsVerification && (
+                  <Link href="/register" className="block mt-1 text-[var(--gold)] font-medium underline">
+                    Re-register to get a new OTP →
+                  </Link>
+                )}
+              </div>
             </div>
-            <h1
-              className="font-bold text-[#1C2A3A]"
-              style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", fontSize: "clamp(28px, 4vw, 36px)" }}
-            >
-              Welcome Back
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">Login to continue your conscious journey.</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-soft p-8 border border-slate-100">
-            {/* Server Error */}
-            {serverError && (
-              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 text-sm text-red-700">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <div>
-                  {serverError}
-                  {needsVerification && (
-                    <Link href="/register" className="block mt-1 text-[#997b47] font-medium underline">
-                      Re-register to get a new OTP →
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* Email */}
-              <div>
-                <label className="block text-[#1C2A3A] mb-1.5 font-medium text-sm" htmlFor="login-email">
-                  Email <span className="text-red-500">*</span>
-                </label>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div>
+              <label className="block text-[#1C2A3A] mb-2 font-medium" htmlFor="login-email">
+                Email<span className="text-red-500">*</span>
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="you@example.com"
+                className={errors.email ? inputErrCls : inputCls}
+                autoComplete="email"
+              />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+            </div>
+            
+            <div>
+              <label className="block text-[#1C2A3A] mb-2 font-medium" htmlFor="login-password">
+                Password<span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
                 <input
-                  id="login-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="you@example.com"
-                  className={errors.email ? inputErrCls : inputCls}
-                  autoComplete="email"
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => set("password", e.target.value)}
+                  placeholder="Enter your password"
+                  className={`${errors.password ? inputErrCls : inputCls} pr-12`}
+                  autoComplete="current-password"
                 />
-                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--gold)] focus:outline-none transition-colors"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="font-medium text-sm text-[#1C2A3A]" htmlFor="login-password">
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <Link href="#" className="text-xs text-[#997b47] hover:underline">Forgot password?</Link>
-                </div>
-                <div className="relative">
-                  <input
-                    id="login-password"
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={(e) => set("password", e.target.value)}
-                    placeholder="Enter your password"
-                    className={`${errors.password ? inputErrCls : inputCls} pr-12`}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#997b47] transition-colors"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                id="login-submit-btn"
-                className="w-full py-3.5 rounded-xl font-semibold bg-[#997b47] text-white hover:bg-[#836838] transition-colors mt-2 flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</> : "Login"}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-[#6E7C4F]">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-[#1C2A3A] hover:text-[#997b47] font-semibold transition-colors">
-                Register now
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+            </div>
+            
+            <div className="flex justify-start pt-1">
+              <Link href="/forgot-password" className="text-sm text-[#1C2A3A] hover:text-[var(--gold)] transition-colors">
+                Forgot password?
               </Link>
             </div>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              id="login-submit-btn"
+              className="w-full py-3.5 rounded-lg font-medium bg-[var(--gold)] text-[#F5F1E8] hover:bg-[#8F7328] transition-colors mt-2 flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</> : "Login"}
+            </button>
+          </form>
+          
+          <div className="mt-8 text-center text-sm text-[#6E7C4F]">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-[#1C2A3A] hover:text-[var(--gold)] font-medium transition-colors">
+              Register now
+            </Link>
           </div>
         </div>
       </div>
-
+      
       <NewsletterSection />
     </div>
   );
@@ -187,7 +178,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#41542f]" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[var(--gold)]" /></div>}>
       <LoginForm />
     </Suspense>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import Image   from "next/image";
 import Link    from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -31,10 +32,20 @@ export default function AdminSidebar() {
     <aside className="w-full lg:w-60 bg-[#061538] text-slate-200 border-r border-[#0e275d] flex lg:flex-col shrink-0">
       {/* Logo */}
       <div className="p-5 border-b border-[#0e275d] flex items-center justify-between gap-3">
-        <span className="font-heading font-bold text-lg text-white whitespace-nowrap">
-          Flaunt<span className="text-[#5993e5]">Green</span>
-          <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#1a51bb]/20 text-[#8fb6f0] border border-[#1a51bb]/30">Admin</span>
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/assets/FGLOGONEW.png"
+              alt="Flaunt Green"
+              width={140}
+              height={54}
+              className="w-auto h-auto"
+              style={{ maxWidth: "140px" }}
+              priority
+            />
+          </Link>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#1a51bb]/20 text-[#8fb6f0] border border-[#1a51bb]/30">Admin</span>
+        </div>
         <Link href="/" className="lg:hidden text-xs text-slate-300 hover:text-white whitespace-nowrap">
           ← Store
         </Link>

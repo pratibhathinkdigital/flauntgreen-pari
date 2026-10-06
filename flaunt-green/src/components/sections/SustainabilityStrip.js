@@ -2,7 +2,6 @@ import { sustainabilityStrip } from "@/lib/content";
 import { images } from "@/lib/images";
 
 const stripImages = [
-  images.sustainabilityStrip.mission,
   images.sustainabilityStrip.guide,
   images.sustainabilityStrip.materials,
   images.sustainabilityStrip.impact,
@@ -24,7 +23,7 @@ style={{
           Leaving a sustainable footprint…
         </p>
 
-        <div className="flex md:grid md:grid-cols-4 gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar">
+        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar">
           {sustainabilityStrip.items.map((item, i) => (
             <div key={item.label} className="text-center shrink-0 snap-center">
               <div

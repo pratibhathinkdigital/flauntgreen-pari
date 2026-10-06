@@ -62,7 +62,7 @@ export default function DogTogsProductsPage() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-16">
           <h1
             className="font-heading text-center mb-8"
-            style={{ fontSize: "clamp(36px, 4vw, 44px)", color: "#A8853D" }}
+            style={{ fontSize: "clamp(36px, 4vw, 44px)", color: "#1C2A3A" }}
           >
             Our Products
           </h1>

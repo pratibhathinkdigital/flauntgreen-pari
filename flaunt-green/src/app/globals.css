@@ -712,3 +712,37 @@
     display: none;
   }
 }
+
+/* =============================================
+   PHONE / TABLET ONLY (< 1024px)
+   Nothing in this block applies on laptop or desktop,
+   so the lg-and-up layout is left exactly as it was.
+   ============================================= */
+@media (max-width: 1023px) {
+  /* The header switches to the slide-out drawer below lg, so the desktop
+     hover dropdowns must never render (they would escape the viewport). */
+  .mega-dropdown,
+  .simple-dropdown {
+    display: none;
+  }
+
+  /* Swiper arrows are hover-revealed on desktop; on touch there is no hover,
+     so give them a real, thumb-sized hit area instead. */
+  .swiper-button-next,
+  .swiper-button-prev {
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .swiper-pagination-bullet {
+    width: 10px !important;
+    height: 10px !important;
+    opacity: 0.45;
+  }
+
+  .swiper-pagination-bullet-active {
+    opacity: 1;
+  }
+}

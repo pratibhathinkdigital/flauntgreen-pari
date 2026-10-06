@@ -76,7 +76,7 @@ export default function DogTogsHero() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-6">
                   <Link
-                    href={slide.exploreLink}
+                    href="/dog_togs/products"
                     className="inline-block text-xs uppercase tracking-[1.5px] font-medium px-6 py-[14px] border border-[var(--gold)] bg-white text-black transition-all duration-[250ms] hover:bg-[var(--gold)] hover:text-[#F5F1E8]"
                   >
                     Explore

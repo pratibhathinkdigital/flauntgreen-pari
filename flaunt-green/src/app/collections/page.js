@@ -54,12 +54,12 @@ export default function CollectionsPage() {
       <section className="relative z-10" style={{ backgroundColor: "#fff", padding: "80px 20px 60px" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
           <h1
-            style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", fontWeight: 700, fontSize: "36px", color: "#1a1a1a", marginBottom: "24px" }}
+            style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", fontWeight: 700, fontSize: "36px", color: "#042943", marginBottom: "24px" }}
           >
             Collections
           </h1>
           <p
-            style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: "21px", lineHeight: 1.5, color: "#1a1a1a" }}
+            style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: "21px", lineHeight: 1.5, color: "#042943" }}
           >
             Every collection is a considered expression of conscious craftsmanship, bringing together sustainable comfort, enduring elegance, and a story uniquely its own.
           </p>
@@ -123,7 +123,7 @@ export default function CollectionsPage() {
               <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: "4/5" }}>
                 <Image src="/assets/collections/E.K.A.M/ekam_main.png" alt="E.K.A.M. Collection" fill className="object-cover" />
               </div>
-              <div className="absolute -bottom-[48px] md:-bottom-[70px] -right-6 w-40 md:w-56 rounded-xl overflow-hidden shadow-xl border-4 border-[#C1502E]" style={{ aspectRatio: "184 / 248" }}>
+              <div className="absolute -bottom-[48px] md:-bottom-[70px] -right-6 w-40 md:w-56 rounded-xl overflow-hidden shadow-xl border-4 border-[#042943]" style={{ aspectRatio: "184 / 248" }}>
                 <Image src="/assets/collections/E.K.A.M/ekam_inset.png" alt="E.K.A.M. Pattern" fill className="object-cover" />
               </div>
             </div>
@@ -140,7 +140,7 @@ export default function CollectionsPage() {
               <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: "4/5" }}>
                 <Image src="/assets/collections/Pristine/pristine_main.png" alt="Pristine Collection" fill className="object-cover" />
               </div>
-              <div className="absolute -bottom-[73px] md:-bottom-[105px] -left-6 w-40 md:w-56 rounded-xl overflow-hidden shadow-xl border-4 border-[#1F3D2B]" style={{ aspectRatio: "395 / 595" }}>
+              <div className="absolute -bottom-[73px] md:-bottom-[105px] -left-6 w-40 md:w-56 rounded-xl overflow-hidden shadow-xl border-4 border-white" style={{ aspectRatio: "395 / 595" }}>
                 <Image src="/assets/collections/Pristine/pristine_inset.png" alt="Pristine Vintage" fill className="object-cover" />
               </div>
             </div>

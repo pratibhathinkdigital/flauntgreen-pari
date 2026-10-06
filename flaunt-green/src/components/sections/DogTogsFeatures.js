@@ -6,7 +6,7 @@ const features = [
   {
     id: 1,
     icon: "/assets/dogtogs/PNG/Asset 4.png",
-    label: "Breathable\n NaturalFabrics",
+    label: "Breathable\n Natural Fabrics",
   },
   {
     id: 2,

@@ -1,3 +1,8 @@
+import Image from "next/image";
+import OurStoryVideoHero from "@/components/sections/OurStoryVideoHero";
+import ManaseePhotoLoop from "@/components/sections/ManaseePhotoLoop";
+import NewsletterSection from "@/components/sections/NewsletterSection";
+
 export const metadata = {
   title: "Our Story | Flaunt Green",
   description: "Discover the story behind Flaunt Green — a sustainable luxury fashion label born from a commitment to conscious craftsmanship.",
@@ -6,135 +11,306 @@ export const metadata = {
 export default function OurStoryPage() {
   return (
     <>
-      <section className="relative py-32 bg-midnight text-ivory overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-10 text-[12rem] font-heading font-black text-white/5 select-none">FG</div>
-          <div className="absolute bottom-10 left-10 text-[8rem] font-heading font-black text-white/5 select-none">&</div>
-        </div>
-        <div className="container-site relative z-10 text-center max-w-4xl">
-          <span className="text-gold text-xs font-bold uppercase tracking-[0.3em] block mb-6">Our Story</span>
-          <h1 className="font-heading font-bold text-5xl md:text-7xl leading-tight mb-6">
-            Luxury fashion that<br />
-            <span className="italic font-normal">tells a sustainability story</span>
-          </h1>
-          <p className="text-ivory/70 text-lg max-w-2xl mx-auto leading-relaxed">
-            At Flaunt Green, the environmental challenges shaping our future
-            inspire every collection we create.
+      <OurStoryVideoHero />
+
+      <section id="about-us" className="py-[80px] px-6 text-center" style={{ backgroundColor: "#FAF8F5" }}>
+        <div className="max-w-[820px] mx-auto">
+          
+          <p
+            className="mx-auto leading-relaxed"
+            style={{
+              fontSize: "19px",
+              color: "#1C2A3A",
+              maxWidth: "820px",
+              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif",
+            }}
+          >
+            Green Initiative &amp; Sustainable Solutions (GISS), was established under the aegis of
+            Eco Ventures Pvt. Ltd. (EVPL), to extend EVPL&apos;s commitment to sustainability beyond
+            its core areas of expertise &mdash; by providing practical and aesthetic lifestyle
+            solutions. Flaunt Green is the sustainable fashion vertical of GISS.
           </p>
         </div>
       </section>
 
-      <section className="section bg-white">
-        <div className="container-site max-w-4xl">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="text-gold text-xs font-bold uppercase tracking-[0.3em] block mb-4">Brand Introduction</span>
-              <h2 className="font-heading font-bold text-4xl md:text-5xl text-text-primary mb-8">
-                Sustainably Crafted<br />
-                <span className="text-brand-500">Timeless Fashion</span>
-              </h2>
-            </div>
-            <div className="space-y-5 text-text-secondary leading-relaxed">
-              <p>
-                We cultivate conscious dialogue and elevate awareness through thoughtfully crafted pieces,
-                where uncompromised comfort meets refined design and the finest quality fabrics.
-              </p>
-              <p>
-                Born as the sustainable fashion vertical of Green Initiatives & Sustainable Solutions (GISS),
-                we offer timeless, versatile, and globally appealing silhouettes using eco-friendly fabrics,
-                sustainable trims, and eco-conscious processes.
-              </p>
-            </div>
+      <section id="our-mission" className="bg-white py-2 px-4 md:px-8 lg:px-12">
+        <div className="relative z-10 w-full max-w-7xl mx-auto flex justify-center">
+          <div className="w-full max-w-[1200px]">
+            <Image
+              src="/assets/Our Story/ourmission.png"
+              alt="Our Mission"
+              width={1400}
+              height={642}
+              className="w-full h-auto object-contain block"
+              priority
+            />
           </div>
         </div>
       </section>
 
-      <section className="py-24 bg-ivory">
-        <div className="container-site max-w-5xl">
-          <div className="text-center mb-16">
-            <span className="text-gold text-xs font-bold uppercase tracking-[0.3em] block mb-4">Brand Inspiration</span>
-            <h2 className="font-heading font-bold text-4xl md:text-5xl text-text-primary mb-6">
-              The Peacock
-            </h2>
-            <p className="text-text-secondary text-lg max-w-3xl mx-auto">
-              India&apos;s national bird serves as the soul of our brand &mdash; a timeless symbol of beauty,
-              pride, artistry, and cultural heritage.
-            </p>
+      <section id="core-values" className="bg-white pt-20 md:pt-32 pb-12 md:pb-20 px-4 md:px-8 lg:px-12">
+        <h2
+          className="font-sans font-bold leading-tight mb-12 text-center"
+          style={{
+            fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+            fontSize: "clamp(36px, 4.5vw, 56px)",
+            color: "#1C2A3A",
+          }}
+        >
+          Core Values
+        </h2>
+        <div className="max-w-[1200px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
+            
+            {/* Item 1 */}
+            <div className="flex flex-col text-center">
+              <div className="w-[180px] h-[180px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] mx-auto mb-6 flex justify-center items-center">
+                <Image
+                  src="/assets/Our Story/CONSCIOUS CREATIVITY.png"
+                  alt="Conscious Creativity"
+                  width={240}
+                  height={240}
+                  className="w-full h-auto object-contain block"
+                />
+              </div>
+              <h3 
+                className="mb-3 font-bold uppercase tracking-wide"
+                style={{
+                  fontSize: "24px",
+                  color: "#1C2A3A",
+                  fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+                }}
+              >
+                CONSCIOUS CREATIVITY
+              </h3>
+              <p 
+                className="leading-relaxed"
+                style={{
+                  fontSize: "16px",
+                  color: "#1C2A3A",
+                  fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif",
+                }}
+              >
+                As a fashion brand, we primarily seek to offer credible alternatives to conventional fashion. Our silhouettes are thoughtfully created to reflect our design inspirations without compromising on functionality, timelessness, and versatility - in line with sustainability principles.
+              </p>
+            </div>
+
+            {/* Item 2 */}
+            <div className="flex flex-col text-center">
+              <div className="w-[180px] h-[180px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] mx-auto mb-6 flex justify-center items-center">
+                <Image
+                  src="/assets/Our Story/ETHICAL PRACTICES.png"
+                  alt="Ethical Practices"
+                  width={240}
+                  height={240}
+                  className="w-full h-auto object-contain block"
+                />
+              </div>
+              <h3 
+                className="mb-3 font-bold uppercase tracking-wide"
+                style={{
+                  fontSize: "24px",
+                  color: "#1C2A3A",
+                  fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+                }}
+              >
+                ETHICAL PRACTICES
+              </h3>
+              <p 
+                className="leading-relaxed"
+                style={{
+                  fontSize: "16px",
+                  color: "#1C2A3A",
+                  fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif",
+                }}
+              >
+                We champion fair wages and rural handloom clusters, while working with local units to sustain urban artisan livelihoods. Through these partnerships, we foster social empowerment, preserve traditional craftsmanship, and reinforce the cultural identifiers that define India&apos;s rich textile heritage.
+              </p>
+            </div>
+
+            {/* Item 3 */}
+            <div className="flex flex-col text-center">
+              <div className="w-[180px] h-[180px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] mx-auto mb-6 flex justify-center items-center">
+                <Image
+                  src="/assets/Our Story/INTENTIONAL CURIOSITY.png"
+                  alt="Intentional Curiosity"
+                  width={240}
+                  height={240}
+                  className="w-full h-auto object-contain block"
+                />
+              </div>
+              <h3 
+                className="mb-3 font-bold uppercase tracking-wide"
+                style={{
+                  fontSize: "24px",
+                  color: "#1C2A3A",
+                  fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+                }}
+              >
+                INTENTIONAL CURIOSITY
+              </h3>
+              <p 
+                className="leading-relaxed"
+                style={{
+                  fontSize: "16px",
+                  color: "#1C2A3A",
+                  fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif",
+                }}
+              >
+                Intentional Curiosity drives us to question, explore and evolve with purpose. We intend to invest in research and innovation to develop novel, practical, and sustainable fashion articles. We also partner with weavers&apos; clusters to contemporarise traditional handloom techniques.
+              </p>
+            </div>
+
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { trait: "Elegance", desc: "The peacock&apos;s graceful form inspires our commitment to refined, timeless design." },
-              { trait: "Individuality", desc: "Just as every feather is unique, each piece we create carries its own distinct character." },
-              { trait: "Heritage", desc: "Rooted in Indian craftsmanship, our collections honour centuries of artistic tradition." },
-            ].map((item) => (
-              <div key={item.trait} className="text-center p-8 border border-brand-100 rounded-2xl bg-white">
-                <div className="w-14 h-14 bg-brand-500 rounded-full flex items-center justify-center mx-auto mb-5">
-                  <span className="text-white font-heading font-bold text-xl">{item.trait[0]}</span>
+        </div>
+      </section>
+
+      <section id="our-team" className="bg-[#FAF8F5] py-20 md:py-28 px-4 md:px-8 lg:px-12">
+        <div className="max-w-[1200px] mx-auto">
+          <h2
+            className="font-sans font-bold leading-tight text-center mb-16"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(36px, 4.5vw, 56px)",
+              color: "#1C2A3A",
+            }}
+          >
+            Our Team
+          </h2>
+
+          <div className="flex flex-col gap-20 md:gap-32">
+            {/* Manasee (Image Left) */}
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <ManaseePhotoLoop
+                  caption={
+                    <p className="mt-4 text-center text-xs font-semibold uppercase tracking-widest" style={{ color: "#1C2A3A" }}>
+                      From Manasee&apos;s Desk
+                    </p>
+                  }
+                />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Manasee Paranjape Ambhaikar
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">
+                  Co-Founder, Green Initiatives &amp; Sustainable Solutions
+                </h4>
+                <div className="text-[#1C2A3A] leading-relaxed space-y-4" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  <p>
+                    Manasee holds a Master&apos;s degree in Civil Engineering from the University of Akron, Ohio, and built her career in geotechnical and environmental engineering in Southern California. Her industry experience reinforced her belief that sustainability must become part of everyday choices. Sharing this vision with her brother, she co-founded Green Initiatives &amp; Sustainable Solutions (GISS), under the aegis of EVPL. Flaunt Green, its sustainable fashion arm, was born from her commitment to offer a credible, ethical alternative to fast fashion through refined aesthetics and globally relevant silhouettes.
+                  </p>
+                  <p className="italic font-medium text-lg border-l-4 border-gray-300 pl-4 my-6">
+                    &quot;Sustainable fashion must go beyond fabric choices-it demands a fundamental shift in how we value and consume clothing. True style embraces responsibility without compromise.&quot;
+                  </p>
+                  <p>
+                    Her philosophy extends to her beloved Beagle, Waffles-EVPL&apos;s cherished comfort companion and discerning ambassador for Dog Togs, Flaunt Green&apos;s sustainable line for furry friends. Drawing on her technical background, Manasee leads with clarity and collaboration, fostering open dialogue, thoughtful debate, and a culture where ideas and individuals are empowered to evolve.
+                  </p>
                 </div>
-                <h3 className="font-heading font-bold text-lg text-text-primary mb-3">{item.trait}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{item.desc}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      <section className="py-24 bg-midnight text-ivory">
-        <div className="container-site max-w-4xl">
-          <div className="text-center mb-12">
-            <span className="text-gold text-xs font-bold uppercase tracking-[0.3em] block mb-4">Founder&apos;s Note</span>
-          </div>
-          <blockquote className="text-center">
-            <p className="font-heading text-2xl md:text-3xl leading-relaxed mb-8 text-ivory/90">
-              &ldquo;Sustainable fashion must go beyond fabric choices &mdash; it demands a fundamental shift
-              in how we value and consume clothing. True style embraces responsibility without compromise.&rdquo;
-            </p>
-            <cite className="not-italic">
-              <span className="text-gold font-bold text-lg block">Manasee</span>
-              <span className="text-ivory/50 text-sm">Founder, Flaunt Green</span>
-            </cite>
-          </blockquote>
-          <div className="mt-16 pt-12 border-t border-white/10 text-center max-w-2xl mx-auto">
-            <p className="text-ivory/70 leading-relaxed">
-              Launching Flaunt Green as the sustainable fashion arm of GISS was a personal commitment to
-              bridge a critical gap &mdash; offering consistent aesthetics, globally appealing silhouettes, and
-              a credible, ethical alternative to fast fashion.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 bg-white">
-        <div className="container-site max-w-5xl">
-          <div className="text-center mb-16">
-            <span className="text-gold text-xs font-bold uppercase tracking-[0.3em] block mb-4">Our Mission</span>
-            <h2 className="font-heading font-bold text-4xl md:text-5xl text-text-primary mb-6">
-              Design With Purpose
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { value: "Sustainability", desc: "Promoting sustainability principles in our fabrics, designs, and garment construction processes." },
-              { value: "Comfort", desc: "Crisp, functional designs that enhance the wearer&apos;s confidence and poise." },
-              { value: "Creativity", desc: "Pushing the boundaries of fashion through sustainable fabrics and Indian handloom techniques." },
-              { value: "Slow Fashion", desc: "Mindful creation over mass production &mdash; embracing quality and intention in every piece." },
-              { value: "Ethical Practices", desc: "Ensuring dignity, fairness, and transparency for every hand that creates our garments." },
-              { value: "Inclusivity", desc: "Celebrating individuality across generations, designing for every stage of self-expression." },
-            ].map((item) => (
-              <div key={item.value} className="p-8 border border-slate-100 rounded-2xl hover:shadow-soft-lg transition-shadow duration-300">
-                <h3 className="font-heading font-bold text-lg text-text-primary mb-3">{item.value}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{item.desc}</p>
+            {/* Meen (Image Right) */}
+            <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/meen.jpg" alt="Meeneshwer Madhu (Meen)" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
               </div>
-            ))}
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Meeneshwer Madhu (Meen)
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">CREATIVE DIRECTOR, FLAUNT GREEN</h4>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  An inveterate student of fashion, Meen identified his sense of purpose early on - to bring fashion to the world. Easy to spot dressed in his signature style, his hobby is antiquing for vintage fashion. Meen has imbibed the values of Flaunt Green and imbued our designs with a unique aesthetics that are a signature of Flaunt Green - versatility and timelessness. The team trusts him to go the extra mile and find solutions to keep our silhouettes sustainable without compromising on the style quotient.
+                </p>
+              </div>
+            </div>
+
+            {/* Kushal (Image Left) */}
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/kushal.PNG" alt="Kushal Pillai" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Kushal Pillai
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">FASHION CONSULTANT, FLAUNT GREEN</h4>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  Kushal is our in-house style monitor. He has traversed an unlikely path from genetic engineering to fashion design. Yes we know! &amp; appreciate this cerebral bent to our designs. A stickler for precision Kushal insists on being hands on for all our pattern making. The team relies on his impeccable fashion sense to style our garments. He is a treasure trove of ideas for our PR team and ensures a cohesive presentation for social media. Needless to say his au courant sense of style often extends to critiquing the team and we love him for it!
+                </p>
+              </div>
+            </div>
+
+            {/* Siddhi (Image Right) */}
+            <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/siddhi.PNG" alt="Siddhi Tambaskar" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Siddhi Tambaskar
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">FASHION DESIGNER, FLAUNT GREEN</h4>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  Designer extraordinaire, meet Siddhi our irrepressible bundle of energy and the sole GenZ member of our team. This dame had the courage to give up on her computer engineering degree course and pursue her true calling of being a fashion designer. Channeling her innate creativity with an eye on the finished product she does not hesitate to chide each member until we meet her exacting high standards!
+                </p>
+              </div>
+            </div>
+
+            {/* Waffles (Image Left) */}
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/waffles.png" alt="Waffles" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Waffles
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">THE BOSS, EVPL</h4>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  The undisputed king of the entire EVPL castle, Waffles rules his devoted subjects with an iron fist and a benign heart! Waffles has a penchant for yoga poses and cozy naps. The team is attuned to his every need and fulfills his every whim and command. He even got us to venture into an unknown territory and extend our core value of sustainability to a petswear line, Dog Togs! We hope you will value the completely eco-friendly designs specially curated for him and his furry friends as much as we did making them!
+                </p>
+              </div>
+            </div>
+
+            {/* Aniruddha (Image Right) */}
+            <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/aniruddha.JPG" alt="Aniruddha Kumar Yadav" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover object-top" />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                  Aniruddha Kumar Yadav
+                </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6">PATTERN MASTER, FLAUNT GREEN</h4>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  With decades of experience in pattern making and garment construction, Aniruddha brings a masterful understanding of cut, proportion, and form to Flaunt Green. As our Pattern Master, he translates creative ideas into precise, thoughtfully constructed silhouettes, guided by an intuitive understanding of fabric and fit. His craftsmanship and technical expertise have been instrumental in establishing Flaunt Green&apos;s in-house sampling unit, enabling closer collaboration between design and construction and allowing ideas to be explored, refined, and brought to life under one roof.
+                </p>
+              </div>
+            </div>
+
+            {/* Support Team (Image Left) */}
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+              <div className="w-full lg:w-1/2">
+                <Image src="/assets/Our Story/support.JPG" alt="Support Team" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
+              </div>
+              <div className="w-full lg:w-1/2 flex flex-col">
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                 SUPPORT TEAM, GREEN INITIATIVES & SUSTAINABLE SOLUTIONS
+                </h3>
+                <p className="text-[#1C2A3A] leading-relaxed text-lg mt-4" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
+                  These people are the veritable cogs that keep GISS running like a well-oiled machine. Whether its running errands, maintaining registers or keeping the pantry operations green they are always available with a ready smile and a can do attitude!
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      <div className="py-6 bg-brand-500 text-center">
-        <p className="text-white text-sm uppercase tracking-[0.3em] font-medium">
-          Sustainably Crafted &middot; Timeless Fashion
-        </p>
-      </div>
+      <NewsletterSection />
     </>
   );
 }

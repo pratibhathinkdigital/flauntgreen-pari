@@ -1,0 +1,89 @@
+/* =============================================
+   SLOW FASHION GUIDE — the six journey steps
+   Supplied spec, verbatim.
+   ============================================= */
+
+.fg-journey{position:relative;overflow:hidden}
+.fg-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.fg-step{position:relative;padding:92px 22px 84px}
+.fg-step:nth-of-type(1){background:#ebe8e2}
+.fg-step:nth-of-type(2){background:#e6e7dd}
+.fg-step:nth-of-type(3){background:#dfe5d6}
+.fg-step:nth-of-type(4){background:#d5ddc8}
+.fg-step:nth-of-type(5){background:#c9d6ba}
+.fg-step:nth-of-type(6){background:#bccfab}
+
+/* ZIGZAG: use grid areas so the text is never squeezed */
+.fg-row{position:relative;z-index:2;max-width:940px;margin:0 auto;display:grid;
+  grid-template-columns:210px minmax(0,1fr);grid-template-areas:"art text";
+  column-gap:56px;align-items:center}
+.fg-step:nth-of-type(even) .fg-row{grid-template-columns:minmax(0,1fr) 210px;grid-template-areas:"text art"}
+.fg-art{grid-area:art;position:relative;text-align:center;min-height:116px;overflow:visible}
+.fg-text{grid-area:text;min-width:0}
+
+/* ICON: solid navy silhouette. Recoloured with a mask so the
+   C2PA-credentialed source SVGs stay byte-identical on disk. */
+.fg-badge{position:relative;z-index:1;width:116px;height:116px;border-radius:50%;margin:0 auto;
+  display:grid;place-items:center;background:#fffdf9;
+  box-shadow:0 0 0 7px #fffdf9,0 0 0 8.5px #b58d4c,0 18px 40px -18px rgba(28,39,64,.28)}
+.fg-icon{width:64px;height:64px;background:#1c2a3a;
+  -webkit-mask:var(--fg-icon) center/contain no-repeat;
+  mask:var(--fg-icon) center/contain no-repeat}
+
+/* TEXT: never break words */
+.fg-text h2{font-size:clamp(32px,5vw,48px);text-transform:uppercase;letter-spacing:.06em;line-height:1.1;
+  word-break:normal;overflow-wrap:normal;hyphens:none}
+.fg-sub{color:#b58d4c;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin:8px 0 20px}
+.fg-pull{font:500 26px/1.35 'Cormorant Garamond',serif;margin:0 0 16px;padding-left:20px;
+  border-left:3px solid #b58d4c;max-width:520px}
+.fg-italic{font-style:italic;color:#5f6779;font-size:14.5px;max-width:52ch;margin:0 0 22px}
+.fg-card{background:#fffdf9;border:1px solid #ddd5c4;border-radius:20px;padding:18px 20px;max-width:540px;
+  box-shadow:0 18px 40px -18px rgba(28,39,64,.28)}
+.fg-svg .base{fill:none;stroke:#b58d4c;stroke-width:2;stroke-dasharray:1 10;stroke-linecap:round;opacity:.6}
+.fg-svg .prog{fill:none;stroke:#b58d4c;stroke-width:2.6;stroke-linecap:round}
+.fg-svg .walker{fill:#b58d4c;stroke:#fffdf9;stroke-width:4}
+
+@media(max-width:720px){
+  .fg-row,.fg-step:nth-of-type(even) .fg-row{grid-template-columns:1fr;grid-template-areas:"art" "text";row-gap:18px}
+  .fg-svg{display:none}
+}
+
+/* =============================================
+   EXPERT CARD INTERNALS
+   The spec block above covers the card shell only.
+   These rules lay out the existing avatar / name / role /
+   copy / expand control that already lived inside it,
+   using the same tokens (#fffdf9 #b58d4c #1c2740 #5f6779).
+   ============================================= */
+.fg-card{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px 16px;align-items:start;
+  transition:transform .3s ease,box-shadow .3s ease}
+.fg-card:hover{transform:translateY(-3px)}
+.fg-avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#dcbb80 0%,#b58d4c 52%,#8f6f3c 100%);color:#fffdf9;
+  font:600 21px/1 'Cormorant Garamond',serif;box-shadow:0 8px 16px -8px rgba(181,141,76,.75);
+  user-select:none}
+.fg-who{min-width:0}
+.fg-name{margin:0;font:600 21px/1.2 'Cormorant Garamond',serif;color:#1c2740}
+.fg-role{margin:2px 0 10px;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  color:#b58d4c}
+.fg-copy{margin:0;font-size:13.5px;font-weight:300;line-height:1.75;color:#5f6779}
+.fg-more{appearance:none;-webkit-appearance:none;position:static;overflow:visible;align-self:flex-start;
+  margin:10px 0 0;padding:0 0 1px;border:0;border-bottom:1px solid rgba(181,141,76,.5);background:none;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:12px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#b58d4c;
+  transition:color .2s ease,gap .2s ease,border-color .2s ease,box-shadow .2s ease}
+.fg-more::before{content:none}
+.fg-more:hover{box-shadow:none;gap:12px;color:#8f6f3c;border-bottom-color:#8f6f3c}
+.fg-more:focus-visible{outline:2px solid #b58d4c;outline-offset:4px;border-radius:3px}
+.fg-chev{transition:transform .25s ease}
+.fg-more[aria-expanded="true"] .fg-chev{transform:rotate(180deg)}
+.fg-full{display:flex;flex-direction:column;gap:12px;margin-top:10px;padding-top:12px;
+  border-top:1px solid rgba(181,141,76,.28);animation:fg-reveal .35s ease both}
+.fg-full[hidden]{display:none}
+@keyframes fg-reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+@media(prefers-reduced-motion:reduce){
+  .fg-card,.fg-more,.fg-chev{transition:none}
+  .fg-card:hover{transform:none}
+  .fg-full{animation:none}
+}

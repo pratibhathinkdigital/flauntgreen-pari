@@ -36,8 +36,8 @@ export default function ShippingPage() {
           <h2 className="font-heading font-semibold text-black text-2xl md:text-3xl mt-10 mb-4">Shipping Partners</h2>
           <p className="text-gray-600 leading-relaxed mb-4">To ensure prompt and secure delivery, we partner with reputable courier agencies:</p>
           <ul className="list-disc list-inside text-gray-600 space-y-2 mb-4">
-            <li>Local shipments are handled by <strong>Delhivery</strong>.</li>
-            <li>International couriers are managed by <strong>Aramex</strong>.</li>
+            <li>Local shipments will be shipped directly by the brand or handled by <strong>Delhivery</strong>.</li>
+            
             <li>All shipments are fully insured and require a recipient's signature and proof of ID confirmation upon delivery.</li>
           </ul>
         </div>

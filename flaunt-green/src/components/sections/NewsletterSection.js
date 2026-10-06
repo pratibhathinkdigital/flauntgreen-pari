@@ -27,14 +27,14 @@ export default function NewsletterSection() {
   };
 
   return (
-    <section className="py-[80px] px-6 text-center" style={{ backgroundColor: "#DEEBD3" }}>
+    <section className="py-[80px] px-6 text-center" style={{ backgroundColor: "#1d2a3b" }}>
       <div className="max-w-[820px] mx-auto">
 <h2
   className="font-sans font-bold leading-tight mb-5"
   style={{
     fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
     fontSize: "clamp(32px, 4vw, 50px)",
-    color: "#1C2A3A",
+    color: "#F5F1E8",
   }}
 >
   Join Our Green Journey
@@ -43,7 +43,7 @@ export default function NewsletterSection() {
           className="mx-auto mb-10 leading-relaxed"
           style={{
             fontSize: "19px",
-            color: "#6E7C4F",
+            color: "#C7D0DC",
             maxWidth: "650px",
           }}
         >
@@ -51,7 +51,7 @@ export default function NewsletterSection() {
           and get exclusive access to limited-edition sustainable pieces.
         </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row" style={{ border: "1px solid #1C2A3A" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row" style={{ border: "1px solid rgba(245, 241, 232, 0.35)" }}>
           <input
             type="email"
             value={email}
@@ -59,7 +59,7 @@ export default function NewsletterSection() {
             placeholder="Enter your email"
             required
             className="flex-1 px-5 py-4 text-sm focus:outline-none"
-            style={{ backgroundColor: "#DEEBD3", color: "#1C2A3A" }}
+            style={{ backgroundColor: "#24334a", color: "#F5F1E8" }}
             id="newsletter-email-input"
           />
           <button

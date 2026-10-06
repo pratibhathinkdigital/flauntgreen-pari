@@ -16,9 +16,9 @@ export default function SocialOutreachPage() {
           >
             SOCIAL OUTREACH
           </h1>
-          <p className="text-lg md:text-xl text-slate-600 max-w-4xl mx-auto mb-10 leading-relaxed font-serif">
-            From Sustainable Fabric to Social Impact - <br className="hidden md:block" />
-            Flaunt Green's Outreach Program in the Bhartapada Zilla Parishad School, Vikramgad Taluka, Palghar District, Maharashtra.
+          <p className="text-slate-600 mb-10 leading-relaxed font-serif md:-mx-[8vw]" style={{ fontSize: "clamp(15px, 1.5vw, 22px)" }}>
+            From Sustainable Fabric to Social Impact -<br className="hidden md:block" />
+            <span className="md:whitespace-nowrap">Flaunt Green's Outreach Program in the Bhartapada Zilla Parishad School, Vikramgad Taluka, Palghar District, Maharashtra.</span>
           </p>
           <div className="w-full relative aspect-[16/9] md:aspect-[21/9] overflow-hidden">
             <img
@@ -38,7 +38,7 @@ export default function SocialOutreachPage() {
             A Hands-On Approach to Social Responsibility
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6 items-stretch">
             {/* Left Video */}
             <div className="w-full h-full min-h-[300px] relative">
               <video
@@ -83,7 +83,7 @@ export default function SocialOutreachPage() {
           >
             Creating Meaningful Impact Through Conscious Fashion
           </h2>
-          <p className="text-slate-700 text-sm md:text-base max-w-4xl mx-auto mb-12 leading-relaxed">
+          <p className="text-slate-700 text-sm md:text-base w-full mb-12 leading-relaxed">
             At Flaunt Green, fashion transcends design and aesthetics; it serves as a powerful conduit for responsibility, awareness, and meaningful social impact. As a sustainable fashion brand, we believe that authentic sustainability extends far beyond fabrics and production processes. It must also cultivate enduring value for communities, artisans, and the environment alike. Our approach to social outreach is grounded in conscious action, long-term vision, and active participation. Rather than perceiving outreach as a fleeting campaign or a visibility-driven initiative, we regard social responsibility as a deeply personal commitment; one that is capable of fostering lasting and transformative impact.
           </p>
 
@@ -157,7 +157,7 @@ export default function SocialOutreachPage() {
         {/* Tile 5 */}
         <section className="text-center">
           <h2
-            className="text-lg md:text-2xl font-serif max-w-4xl mx-auto mb-12 leading-relaxed text-[#1C2A3A]"
+            className="text-lg md:text-2xl font-serif w-full mb-12 leading-relaxed text-[#1C2A3A]"
           >
             At Flaunt Green we believe that sustainability should actively benefit people in need, and personally participating in the outreach process, highlighted the profound impact of every small action.
           </h2>
@@ -188,7 +188,7 @@ export default function SocialOutreachPage() {
           >
             Beyond Fashion...
           </h2>
-          <p className="text-slate-700 text-lg md:text-xl max-w-3xl mx-auto mb-10 leading-relaxed font-serif">
+          <p className="text-slate-700 text-lg md:text-xl w-full mb-10 leading-relaxed font-serif">
             Flaunt Green continues working toward a future where fashion becomes a force for long-term positive change.
           </p>
           <div className="w-full relative aspect-[16/9] md:aspect-[21/9]">

@@ -25,7 +25,7 @@ const subcategories = [
       "Explore how we engage beyond garments — our partnerships with artisan communities, sustainable initiatives, and the conversations that shape a greener future for fashion.",
     image: "/assets/journal/Social_Outreach_Tab.jpg",
     href: "/journal/social-outreach",
-    cta: "EXPLORE",
+    cta: "READ MORE",
     accent: "#4A7B5A",
   },
 ];
