@@ -23,8 +23,8 @@ export const images = {
   },
   sustainabilityStrip: {
     mission: "/assets/OurMission.png",
-    guide: "/assets/SlowFashionGuide.png",
-    materials: "/assets/OurMaterials.png",
+    guide: "/assets/SlowFashionGuide1.jpg",
+    materials: "/assets/OurMaterials1.jpg",
     impact: "/assets/FGImpact.png",
   },
   featuredBlogs: {

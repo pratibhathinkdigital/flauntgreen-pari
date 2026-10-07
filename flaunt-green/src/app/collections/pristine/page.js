@@ -163,12 +163,12 @@ export default function PristinePage() {
         <Image src="/assets/pristine/PB.png" alt="Pristine Hero" fill className="object-cover" priority />
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.3)" }} />
         <div className="absolute inset-x-0 bottom-12 z-10 flex flex-col sm:flex-row items-center justify-center gap-4 px-4">
-          <a
-            href="#inspiration"
+          <Link
+            href="/collections/pristine/discover"
             className="rounded-none inline-block text-center text-xs uppercase tracking-[2px] font-medium px-[30px] py-[14px] bg-[#8C7A4E] text-[#F5F1E8] transition-all duration-[250ms] hover:bg-[#7A6A3E]"
           >
             Discover Pristine
-          </a>
+          </Link>
           <a
             href="#products"
             className="rounded-none inline-block text-center text-xs uppercase tracking-[2px] font-medium px-[30px] py-[14px] bg-[#8C7A4E] text-[#F5F1E8] transition-all duration-[250ms] hover:bg-[#7A6A3E]"

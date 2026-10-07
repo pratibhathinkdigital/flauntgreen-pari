@@ -10,7 +10,7 @@ export default function OurPromiseSection() {
           <div className="relative w-full max-w-[1200px]">
             <Link href="/our-story" className="block w-full">
               <Image
-                src="/assets/ourpromise1.png"
+                src="/assets/ourpromise11.png"
                 alt="Our Promise"
                 width={1400}
                 height={642}

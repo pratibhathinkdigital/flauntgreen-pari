@@ -219,32 +219,62 @@ export default function EkamPage() {
           </motion.p>
         </div>
 
-        <a
-          href="#philosophy-collection"
+        <div
           style={{
             position: "absolute",
             left: "50%",
             transform: "translateX(-50%)",
             bottom: "48px",
             zIndex: 3,
-            fontFamily: "var(--font-body), 'Inter', sans-serif",
-            fontSize: "12px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#F5F1E8",
-            background: "#8C7A4E",
-            padding: "14px 30px",
-            borderRadius: 0,
-            textDecoration: "none",
-            fontWeight: 500,
-            whiteSpace: "nowrap",
-            transition: "background 0.25s ease",
+            display: "flex",
+            gap: "16px",
+            flexWrap: "wrap",
+            justifyContent: "center",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#7A6A3E"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#8C7A4E"; }}
         >
-          Explore the Collection
-        </a>
+          <a
+            href="#"
+            style={{
+              fontFamily: "var(--font-body), 'Inter', sans-serif",
+              fontSize: "12px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: "#F5F1E8",
+              background: "#8C7A4E",
+              padding: "14px 30px",
+              borderRadius: 0,
+              textDecoration: "none",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              transition: "background 0.25s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#7A6A3E"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#8C7A4E"; }}
+          >
+            Discover E.K.A.M.
+          </a>
+          <a
+            href="#philosophy-collection"
+            style={{
+              fontFamily: "var(--font-body), 'Inter', sans-serif",
+              fontSize: "12px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: "#F5F1E8",
+              background: "#8C7A4E",
+              padding: "14px 30px",
+              borderRadius: 0,
+              textDecoration: "none",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              transition: "background 0.25s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#7A6A3E"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#8C7A4E"; }}
+          >
+            Explore the Collection
+          </a>
+        </div>
       </section>
 
       <style>{`
