@@ -13,25 +13,7 @@ export default function OurStoryPage() {
     <>
       <OurStoryVideoHero />
 
-      <section id="about-us" className="py-[80px] px-6 text-center" style={{ backgroundColor: "#FAF8F5" }}>
-        <div className="max-w-[820px] mx-auto">
-          
-          <p
-            className="mx-auto leading-relaxed"
-            style={{
-              fontSize: "19px",
-              color: "#1C2A3A",
-              maxWidth: "820px",
-              fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif",
-            }}
-          >
-            Green Initiative &amp; Sustainable Solutions (GISS), was established under the aegis of
-            Eco Ventures Pvt. Ltd. (EVPL), to extend EVPL&apos;s commitment to sustainability beyond
-            its core areas of expertise &mdash; by providing practical and aesthetic lifestyle
-            solutions. Flaunt Green is the sustainable fashion vertical of GISS.
-          </p>
-        </div>
-      </section>
+      
 
       <section id="our-mission" className="bg-white py-2 px-4 md:px-8 lg:px-12">
         <div className="relative z-10 w-full max-w-7xl mx-auto flex justify-center">
@@ -297,7 +279,7 @@ export default function OurStoryPage() {
                 <Image src="/assets/Our Story/support.JPG" alt="Support Team" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
               </div>
               <div className="w-full lg:w-1/2 flex flex-col">
-                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
                  SUPPORT TEAM, GREEN INITIATIVES & SUSTAINABLE SOLUTIONS
                 </h3>
                 <p className="text-[#1C2A3A] leading-relaxed text-lg mt-4" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>

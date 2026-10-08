@@ -75,6 +75,7 @@ export default function SlowFashionGuidePage() {
             width={1100}
             height={700}
             className="w-full h-auto"
+            color="#1C2A3A"
           />
         </div>
       </section>

@@ -17,7 +17,7 @@ const steps = [
     story: {
       name: "Manasee",
       role: "Co-Founder",
-      cta: "Read her story",
+      cta: "Read More",
       content: [
         "With her background in geotechnical and environmental engineering from the United States, Manasee's journey into sustainability began through a systems-thinking lens. Trained to understand the relationship between people, resources, and the environment, she viewed sustainability not merely as an environmental challenge, but as a question of how we design and consume.",
         "The turning point came upon her return to India. Having once been a consumer of fast fashion herself, she began to recognize a growing disconnect between modern consumption patterns and the traditionally lived values of everyday India. A culture that once embodied sustainable living — metal tiffin carriers, handloomed and khadi textiles, canvas shopping bags, glass milk bottles, and deeply embedded garment mending traditions — was increasingly moving toward disposable fashion and overconsumption.",
@@ -38,7 +38,7 @@ const steps = [
     story: {
       name: "Siddhi",
       role: "Fashion Designer",
-      cta: "Read her story",
+      cta: "Read More",
       content: [
         "Siddhi's journey into slow fashion is rooted in a deep process of unlearning and transformation. Coming from direct exposure to the fast fashion industry, she initially worked within systems driven by speed, high-volume output, and rapid trend cycles — where designs were often dictated by deadlines and seasonal demands rather than longevity or purpose.",
         "Her shift began with questioning this pace itself, why fashion needed to be immediate, and whether creativity could exist without urgency. This led her to gradually unlearn speed as a default value in design.",
@@ -61,7 +61,7 @@ const steps = [
     story: {
       name: "Meen",
       role: "Creative Director",
-      cta: "Read his story",
+      cta: "Read More",
       content: [
         "Meen approaches clothing as a long-term, evolving relationship rather than a consumable product. His philosophy is rooted in the belief that garments are not meant for short cycles of use, but for extended lifespans shaped by wear, care, and time.",
         "He consistently wears clothing until it naturally reaches the end of its lifecycle, and often beyond — through creative renewal, resisting the idea of premature replacement. Instead of discarding, he actively engages in repairing and mending garments, treating maintenance as an essential part of their existence.",
@@ -83,7 +83,7 @@ const steps = [
     story: {
       name: "Meen & Kushal",
       role: "Creative Team",
-      cta: "Read their story",
+      cta: "Read More",
       content: [
         "Meen believes that repair is not about holding on to the past; it is about respecting the journey a garment has already taken. Every stitch, patch, and alteration extends a story that would otherwise be cut short. When we mend our clothes, we are not fixing imperfections but preserving value, memory, and craftsmanship.",
         "Kushal thinks that the most sustainable purchase is often the one you never have to make. Repair allows us to extract the full value from the resources, labour, and skill already invested in a garment. Extending the life of what we own is one of the simplest and most powerful acts of conscious consumption.",
@@ -102,7 +102,7 @@ const steps = [
     story: {
       name: "Kushal",
       role: "Sustainability Lead",
-      cta: "Read his story",
+      cta: "Read More",
       content: [
         "Kushal views clothing not as isolated choices but as part of an intentional framework of consumption. His philosophy challenges unnecessary accumulation and promotes conscious decision-making in everyday dressing. He strongly advocates for self-made clothing and the use of heritage and handloom fabrics, emphasizing craftsmanship, durability, and cultural continuity.",
         "At the core of Kushal's approach is the belief that clothing should justify its existence through meaningful and repeated use. By embracing minimal, highly intentional shopping, he focuses only on garments that serve a lasting purpose and integrate naturally into everyday life.",
@@ -123,7 +123,7 @@ const steps = [
     story: {
       name: "The Team",
       role: "Flaunt Green",
-      cta: "Read the full story",
+      cta: "Read More",
       content: [
         "Manasee has learnt that sustainability is not a checklist of actions; it is a mindset that shapes everyday decisions. The moment we begin questioning how and why we consume, we stop being passive consumers and become active participants in creating a more responsible future.",
         "Meen believes that personal style is not built through constant replacement. It emerges through years of wearing, caring for, and living in garments that become part of your story. Fashion becomes truly meaningful when it reflects a life lived, and no trends are followed.",

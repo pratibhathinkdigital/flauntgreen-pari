@@ -1,4 +1,5 @@
 import SustainabilityHero from "@/components/sections/SustainabilityHero";
+import SustainabilitySections from "@/components/sections/SustainabilitySections";
 
 export const metadata = {
   title: "Sustainability | Flaunt Green",
@@ -8,10 +9,10 @@ export const metadata = {
 
 export default function SustainabilityPage() {
   return (
-    <>
+    <div className="bg-white">
       <SustainabilityHero />
 
-      <section className="py-[80px] px-6 text-center" style={{ backgroundColor: "#FAF8F5" }}>
+      <section className="py-[80px] px-6 text-center" style={{ backgroundColor: "#FFFFFF" }}>
         <div className="max-w-[820px] mx-auto">
           <p
             className="mx-auto leading-relaxed"
@@ -29,6 +30,8 @@ export default function SustainabilityPage() {
           </p>
         </div>
       </section>
-    </>
+
+      <SustainabilitySections />
+    </div>
   );
 }

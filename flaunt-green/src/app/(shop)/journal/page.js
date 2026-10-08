@@ -110,7 +110,7 @@ export default function JournalPage() {
 
 
       {/* ── TWO SUB-CATEGORY TILES ── */}
-      <section className="px-6 pt-24 pb-20 max-w-[1200px] mx-auto flex flex-col gap-12" id="journal-sections">
+      <section className="px-6 pt-24 pb-20 max-w-[1200px] mx-auto flex flex-col gap-32" id="journal-sections">
         {subcategories.map((cat) => (
           <div key={cat.id} className="flex flex-col items-center">
             {/* Title above image */}
