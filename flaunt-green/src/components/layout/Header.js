@@ -66,7 +66,7 @@ const dogTogsLinks = [
 const sustainabilityLinks = [
   { label: "Slow Fashion Guide", href: "/slow-fashion-guide" },
   { label: "Our Materials", href: "/our-materials" },
-  { label: "FG Impact", href: "/coming-soon" },
+  { label: "FG Impact", href: "/fg-impact" },
 ];
 
 const ourStoryLinks = [

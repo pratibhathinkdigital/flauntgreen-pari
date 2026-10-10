@@ -279,9 +279,10 @@ export default function OurStoryPage() {
                 <Image src="/assets/Our Story/support.JPG" alt="Support Team" width={800} height={1000} className="w-full h-auto max-h-[600px] object-cover" />
               </div>
               <div className="w-full lg:w-1/2 flex flex-col">
-                <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
-                 SUPPORT TEAM, GREEN INITIATIVES & SUSTAINABLE SOLUTIONS
+                <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-heading), 'Cormorant Garamond', serif", color: "#1C2A3A" }}>
+                 SUPPORT TEAM,
                 </h3>
+                <h4 className="text-sm uppercase tracking-widest text-gray-500 mb-6"> GREEN INITIATIVES & SUSTAINABLE SOLUTIONS</h4>
                 <p className="text-[#1C2A3A] leading-relaxed text-lg mt-4" style={{ fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, var(--font-sans), system-ui, sans-serif" }}>
                   These people are the veritable cogs that keep GISS running like a well-oiled machine. Whether its running errands, maintaining registers or keeping the pantry operations green they are always available with a ready smile and a can do attitude!
                 </p>

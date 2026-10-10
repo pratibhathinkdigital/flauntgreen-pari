@@ -30,7 +30,12 @@ export default function FGImpactPage() {
 
       {/* Intro Section */}
       <section className="py-20 px-4 md:px-12 w-full max-w-7xl mx-auto space-y-8">
-        <h2 className="text-3xl font-serif text-center text-[#8C7A4E] mb-12">Tangible Impact achieved so far...</h2>
+        <h2 className="font-sans font-bold leading-tight mb-12 text-center"
+          style={{
+            fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+            fontSize: "clamp(36px, 4.5vw, 56px)",
+            color: "#1C2A3A",
+          }}>Tangible Impact achieved so far...</h2>
         
         <div className="bg-[#fcfaf7] p-8 md:p-12 rounded-xl shadow-sm border border-[#e6dccd] space-y-6 text-gray-700 leading-relaxed text-sm md:text-base">
           <p className="font-semibold text-gray-900">
@@ -115,7 +120,12 @@ export default function FGImpactPage() {
             
             {activeTab === 'handloom' && (
               <div className="animate-fade-in space-y-16">
-                <h2 className="text-4xl font-serif text-center text-[#3c2a1a] mb-12">Handloom: A Conscious Choice - Detailed Data</h2>
+                <h2 className="font-sans font-bold leading-tight mb-12 text-center"
+          style={{
+            fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+            fontSize: "clamp(36px, 4.5vw, 56px)",
+            color: "#1C2A3A",
+          }}>Handloom: A Conscious Choice - Detailed Data</h2>
                 
                 {/* 1. ENERGY CONSUMPTION */}
                 <div className="space-y-6 bg-white p-8 rounded-lg shadow-sm">
@@ -281,7 +291,12 @@ export default function FGImpactPage() {
 
             {activeTab === 'khadi' && (
               <div className="animate-fade-in space-y-16">
-                <h2 className="text-4xl font-serif text-center text-[#3c2a1a] mb-12">The Case For Khadi - Detailed Data</h2>
+                <h2 className="font-sans font-bold leading-tight mb-12 text-center"
+          style={{
+            fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+            fontSize: "clamp(36px, 4.5vw, 56px)",
+            color: "#1C2A3A",
+          }}>The Case For Khadi - Detailed Data</h2>
                 
                 {/* 1. ENERGY CONSUMPTION */}
                 <div className="space-y-6 bg-white p-8 rounded-lg shadow-sm">

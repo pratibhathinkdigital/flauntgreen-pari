@@ -95,12 +95,19 @@ export default function DiscoverPristinePage() {
           src={`${imagesVideosPrefix}TILE 2.PNG`}
           alt="Adaptation as a way of life - Himalayan landscape"
           className="w-full object-cover"
-          style={{ maxHeight: '45vh', minHeight: '220px', objectPosition: 'center 50%' }}
+          style={{ maxHeight: '45vh', minHeight: '220px', objectPosition: 'center 60%' }}
         />
 
         {/* Heading + Text below image on white */}
         <div className="py-10 px-4 md:px-12 w-full text-center space-y-4">
-          <h2 className="text-base tracking-widest uppercase font-medium mb-4">ADAPTATION AS A WAY OF LIFE</h2>
+          <h2 className="font-sans font-bold leading-tight mb-4"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#1C2A3A",
+            }}>
+            ADAPTATION AS A WAY OF LIFE
+          </h2>
           <p className="text-base font-light leading-relaxed text-gray-800">
             Life at extreme altitude demands an intimate understanding of climate, terrain and the optimal use of available resources.
           </p>
@@ -129,12 +136,19 @@ export default function DiscoverPristinePage() {
           src={`${imagesVideosPrefix}TILE 3.PNG`}
           alt="A Landscape in Transition - Himalayan peaks"
           className="w-full object-cover"
-          style={{ maxHeight: '38vh', minHeight: '180px', objectPosition: 'center top' }}
+          style={{ maxHeight: '25vh', minHeight: '180px', objectPosition: 'center top' }}
         />
 
         {/* Heading + Text sandwiched between image halves */}
         <div className="py-10 px-4 md:px-12 w-full text-center space-y-4">
-          <h2 className="text-base tracking-widest uppercase font-medium mb-4">A LANDSCAPE IN TRANSITION</h2>
+          <h2 className="font-sans font-bold leading-tight mb-4"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#1C2A3A",
+            }}>
+            A LANDSCAPE IN TRANSITION
+          </h2>
           <p className="text-base font-light leading-relaxed text-gray-800">
             Yet the very element that defines the Third Pole — its ice — is increasingly vulnerable.<br />
             The cryosphere, encompassing glaciers, snow and permafrost, is changing rapidly.<br />
@@ -161,21 +175,47 @@ export default function DiscoverPristinePage() {
       {/* Page 5: TILE 3 - Environmental Threats */}
       <section className="py-24 bg-[#fbfbfb] px-4 md:px-8 text-center">
         <div className="w-full space-y-12">
-          <h2 className="text-3xl font-medium tracking-wide">Environmental Threats Facing the Third Pole</h2>
+          <h2 className="font-sans font-bold leading-tight mb-4"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#1C2A3A",
+            }}>
+            Environmental Threats Facing the Third Pole
+          </h2>
           <p className="text-lg font-light leading-relaxed w-full px-4 md:px-12">
             The HKH regions is facing existential threat due to drastic climatic changes causing - glaciers to melt, increased temperatures, deforestation and loss of biodiversity, and water scarcity.<br />
             These eventually lead to water shortages, floods, and damage to ecosystems and local communities.
           </p>
 
-          <div className="py-12 flex justify-center">
-            <img
-              src={`${imagePathPrefix}TILE 3 Environmental Threats Facing the Third Pole-20261007T063711Z-1-001/TILE 3 Environmental Threats Facing the Third Pole/Environmental Threats.png`}
-              alt="Environmental Threats"
-              className="max-w-full h-auto w-[90%] md:w-3/4"
-            />
+          <div className="py-12 w-full grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-16">
+            {[
+              { src: "1.png", label: "MELTING GLACIERS" },
+              { src: "2.png", label: "GLOBAL WARMING" },
+              { src: "3.png", label: "BIODIVERSITY LOSS" },
+              { src: "4.png", label: "WATER SCARCITY" },
+            ].map((icon) => (
+              <div key={icon.src} className="flex flex-col items-center">
+                <img
+                  src={`${imagePathPrefix}discover pristine icons/${icon.src}`}
+                  alt={icon.label}
+                  className="w-full max-w-[220px] aspect-square object-contain"
+                />
+                <p className="mt-5 text-base md:text-lg font-medium tracking-wide" style={{ color: "#1C2A3A" }}>
+                  {icon.label}
+                </p>
+              </div>
+            ))}
           </div>
 
-          <h3 className="text-2xl font-medium tracking-wide pt-8">Why Pristine Matters</h3>
+          <h3 className="font-sans font-bold leading-tight mb-4"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#1C2A3A",
+            }}>
+            Why Pristine Matters
+          </h3>
           <p className="text-lg font-light leading-relaxed w-full text-justify md:text-center px-4 md:px-12">
             The Pristine Collection is our response—quiet yet urgent. Drawing inspiration from the indigenous clothing of the HKH region and its melting glaciers, the collection stands as a witness, refusing to romanticise loss and instead calling for care, accountability, and better choices. Each silhouette, texture, and tone reflects purity under threat, balance disrupted, and natural landscapes asking to be seen, respected, and protected.
           </p>
@@ -187,7 +227,14 @@ export default function DiscoverPristinePage() {
 
       {/* Page 6: TILE 4 - Colour & Fabric Story */}
       <section className="py-24 px-4 md:px-12 text-center w-full bg-white">
-        <h2 className="text-3xl font-serif text-[#a68a56] mb-16">Colour & Fabric Story</h2>
+        <h2 className="font-sans font-bold leading-tight mb-16"
+          style={{
+            fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+            fontSize: "clamp(24px, 3vw, 36px)",
+            color: "#1C2A3A",
+          }}>
+          Colour & Fabric Story
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
           <div className="flex flex-col items-center">
             <img src={`${imagePathPrefix}TILE 4 Colour & Fabric Story-20261007T063723Z-1-001/TILE 4 Colour & Fabric Story/1.png.png`} alt="Marigold Orange" className="w-full h-auto object-cover" />
@@ -210,7 +257,14 @@ export default function DiscoverPristinePage() {
       {/* Page 7: TILE 2 - THE COLLECTION (Images) */}
       <section className="py-24 bg-[#fafafa] px-4 md:px-8 text-center space-y-12">
         <div className="w-full space-y-8 px-4 md:px-12">
-          <h2 className="text-2xl tracking-widest uppercase font-medium mb-10">THE COLLECTION</h2>
+          <h2 className="font-sans font-bold leading-tight mb-10"
+            style={{
+              fontFamily: "var(--font-heading), 'Cormorant Garamond', serif",
+              fontSize: "clamp(24px, 3vw, 36px)",
+              color: "#1C2A3A",
+            }}>
+            THE COLLECTION
+          </h2>
           <p className="text-lg font-light leading-relaxed">
             Pristine translates the landscape, ingenuity and functional intelligence of the Third Pole into contemporary workwear.<br />
             Rather than reproducing the mountains literally, the collection interprets their visual language and adaptive principles through form, construction and movement.
@@ -258,7 +312,7 @@ export default function DiscoverPristinePage() {
       <section className="w-full bg-white">
         {/* Top image — upper crop of TILE 1.PNG (mountain peaks & blue sky) */}
         <img
-          src={`${imagesVideosPrefix}TILE 1.PNG`}
+          src={`${imagesVideosPrefix}TILE 7.PNG`}
           alt="Mindful Material Choices - Himalayan peaks"
           className="w-full object-cover"
           style={{ maxHeight: '40vh', minHeight: '200px', objectPosition: 'center top' }}
@@ -284,7 +338,7 @@ export default function DiscoverPristinePage() {
 
         {/* Bottom image — lower crop of TILE 1.PNG (turquoise river + prayer flags) */}
         <img
-          src={`${imagesVideosPrefix}TILE 1.PNG`}
+          src={`${imagesVideosPrefix}TILE 7.PNG`}
           alt="Mindful Material Choices - Himalayan river and prayer flags"
           className="w-full object-cover"
           style={{ maxHeight: '40vh', minHeight: '200px', objectPosition: 'center bottom' }}
