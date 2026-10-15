@@ -69,7 +69,7 @@ class ProductController extends Controller
 
         // EKAM collection products are prioritized first on all listings (Shop All, Her, Him)
         $query->orderByRaw("CASE WHEN collection_id IN (SELECT id FROM collections WHERE slug LIKE '%ekam%' OR name LIKE '%ekam%') THEN 0 ELSE 1 END")
-              ->orderBy('id', 'asc');
+              ->orderBy('id', 'desc');
 
         if ($request->has('limit') && is_numeric($request->limit)) {
             $query->limit((int)$request->limit);

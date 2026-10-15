@@ -38,7 +38,10 @@ export default function AdminProductsPage() {
         categoriesApi.getAll(),
         collectionsApi.getAll()
       ]);
-      setProducts(prodRes.data);
+      const sortedProducts = Array.isArray(prodRes.data)
+        ? [...prodRes.data].sort((a, b) => (b.id || 0) - (a.id || 0))
+        : [];
+      setProducts(sortedProducts);
       setDbCategories(catRes.data);
       setDbCollections(colRes.data);
     } catch (err) {
