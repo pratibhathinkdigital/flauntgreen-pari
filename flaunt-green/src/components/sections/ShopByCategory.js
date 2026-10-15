@@ -9,8 +9,19 @@ const categories = [
 ];
 
 function CategoryCard({ name, image, slug }) {
+  const targetHref =
+    slug === "her"
+      ? "/her"
+      : slug === "him"
+      ? "/him"
+      : slug === "accessories"
+      ? "/her/accessories"
+      : slug === "dog-togs"
+      ? "/dog_togs"
+      : `/shop?category=${slug}`;
+
   return (
-    <Link href={slug === 'her' ? '/her' : slug === 'him' ? '/him' : `/shop/${slug}`} className="group flex flex-col items-center">
+    <Link href={targetHref} className="group flex flex-col items-center">
       <div className="relative w-full" style={{ aspectRatio: "3 / 4.3" }}>
 
         {/* Gold outline frame — offset bottom-right behind the image, reduced height */}
