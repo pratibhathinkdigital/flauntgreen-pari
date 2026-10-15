@@ -18,6 +18,7 @@ import { getInventoryForSlug } from "@/data/inventory";
 import { Leaf, Truck, RotateCcw, Star, Plus, Minus, Ruler, Check, Hand, Heart } from "lucide-react";
 import { productsApi, reviewsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
+import { formatPrice } from "@/lib/utils";
 
 /* ─── Product Data ─────────────────────────────────────────────────────────── */
 
