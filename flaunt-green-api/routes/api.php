@@ -140,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/admin/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy']);
 
         // Coupons / Marketing
+        Route::post('/admin/coupons/send-multiple-email', [\App\Http\Controllers\Api\CouponController::class, 'sendMultipleEmail']);
         Route::apiResource('/admin/coupons', \App\Http\Controllers\Api\CouponController::class);
         Route::post('/admin/coupons/{coupon}/send-email', [\App\Http\Controllers\Api\CouponController::class, 'sendEmail']);
 

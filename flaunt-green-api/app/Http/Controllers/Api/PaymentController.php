@@ -35,6 +35,8 @@ class PaymentController extends Controller
             'shipping_address' => 'required|string',
             'shipping_cost'    => 'nullable|numeric|min:0',
             'coupon_code'      => 'nullable|string|max:50',
+            'coupon_codes'     => 'nullable|array',
+            'coupon_codes.*'   => 'string',
             'items'            => 'required|array|min:1',
             'items.*.id'       => 'nullable|integer',
             'items.*.name'     => 'required|string',
@@ -65,15 +67,32 @@ class PaymentController extends Controller
             }
         }
 
-        // Server-side coupon verification
+        // ── Server-side Multiple Coupon Stacking Verification ─────────────────
+        $couponCodes = [];
+        if (!empty($validated['coupon_codes']) && is_array($validated['coupon_codes'])) {
+            $couponCodes = $validated['coupon_codes'];
+        } elseif (!empty($validated['coupon_code'])) {
+            $couponCodes = explode(',', $validated['coupon_code']);
+        }
+
+        $cleanCodes = array_slice(array_unique(array_filter(array_map(function($c) {
+            return strtoupper(trim($c));
+        }, $couponCodes))), 0, 3);
+
         $discountAmount = 0;
-        if (!empty($validated['coupon_code'])) {
-            $coupon = \App\Models\Coupon::where('code', strtoupper(trim($validated['coupon_code'])))->first();
+        $validCoupons = [];
+        foreach ($cleanCodes as $code) {
+            $coupon = \App\Models\Coupon::where('code', $code)->first();
             $errorMessage = null;
             if ($coupon && $coupon->isValidFor($serverSubtotal, $errorMessage)) {
-                $discountAmount = $coupon->calculateDiscount($serverSubtotal);
+                $cDiscount = $coupon->calculateDiscount($serverSubtotal);
+                $discountAmount += $cDiscount;
+                $validCoupons[] = $coupon;
             }
         }
+
+        // Discount cannot exceed subtotal
+        $discountAmount = min($discountAmount, $serverSubtotal);
 
         $shippingCost = (float)($validated['shipping_cost'] ?? 0);
         $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $discountAmount);
@@ -104,6 +123,12 @@ class PaymentController extends Controller
             }
         }
 
+        $appliedCodesList = !empty($validCoupons)
+            ? implode(', ', array_map(fn($c) => $c->code, $validCoupons))
+            : null;
+
+        $orderNotes = $appliedCodesList ? "Coupons: [{$appliedCodesList}]" : null;
+
         DB::beginTransaction();
         try {
             $amountInPaise = intval($clientAmount * 100);
@@ -126,11 +151,14 @@ class PaymentController extends Controller
                 'shipping_name'    => $validated['shipping_name'],
                 'shipping_phone'   => $validated['shipping_phone'],
                 'shipping_address' => $validated['shipping_address'],
-                'subtotal'         => $clientAmount,
-                'total'            => $clientAmount,
+                'subtotal'         => $serverSubtotal,
+                'shipping_cost'    => $shippingCost,
+                'tax'              => 0,
+                'total'            => $serverCalculatedTotal,
                 'status'           => 'pending',
                 'payment_method'   => 'razorpay',
                 'payment_status'   => 'pending',
+                'notes'            => $orderNotes,
             ]);
 
             // Create Order Items
@@ -341,6 +369,14 @@ class PaymentController extends Controller
                         $deductQty = min((int)$variant->stock, (int)$item->quantity);
                         $variant->decrement('stock', $deductQty);
                     }
+                }
+            }
+
+            // Atomically increment usage count for each applied coupon
+            if (!empty($lockedOrder->notes) && preg_match('/Coupons:\s*\[(.*?)\]/', $lockedOrder->notes, $matches)) {
+                $appliedCodes = array_filter(array_map('trim', explode(',', $matches[1])));
+                foreach ($appliedCodes as $cCode) {
+                    \App\Models\Coupon::where('code', strtoupper($cCode))->increment('used_count');
                 }
             }
         });

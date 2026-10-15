@@ -12,12 +12,16 @@ import { couponsApi } from "@/services/api";
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
-  const { items, updateQuantity, removeItem, totalPrice, clearCart, appliedCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
+  const { items, updateQuantity, removeItem, totalPrice, clearCart, appliedCoupons, appliedCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+
+  const couponsList = (appliedCoupons && appliedCoupons.length > 0)
+    ? appliedCoupons
+    : (appliedCoupon ? [appliedCoupon] : []);
 
   useEffect(() => {
     setMounted(true);
@@ -32,15 +36,32 @@ export default function CartPage() {
 
   const handleApplyCoupon = async (e) => {
     e?.preventDefault();
-    if (!couponCode.trim()) return;
+    const cleaned = couponCode.trim().toUpperCase();
+    if (!cleaned) return;
+
+    if (couponsList.some((c) => c.code.toUpperCase() === cleaned)) {
+      setCouponError(`Promo code "${cleaned}" is already applied!`);
+      return;
+    }
+
+    if (couponsList.length >= 3) {
+      setCouponError("You can apply a maximum of 3 promo codes per order.");
+      return;
+    }
+
     setCouponLoading(true);
     setCouponError("");
     try {
-      const res = await couponsApi.validate(couponCode.trim(), totalPrice());
+      const res = await couponsApi.validate(cleaned, totalPrice());
       if (res.data?.valid) {
-        applyCoupon(res.data.coupon);
-        setCouponCode("");
-        toast.success(`Promo code applied: ${res.data.coupon.label}`);
+        const result = applyCoupon(res.data.coupon);
+        if (result?.success === false) {
+          setCouponError(result.message);
+          toast.error(result.message);
+        } else {
+          setCouponCode("");
+          toast.success(`🎉 Applied ${res.data.coupon.code}: ${res.data.coupon.label}`);
+        }
       } else {
         setCouponError(res.data?.message || "Invalid promo code");
       }
@@ -53,22 +74,33 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveCoupon = () => {
-    removeCoupon();
+  const handleRemoveCoupon = (codeToRemove) => {
+    removeCoupon(codeToRemove);
     setCouponError("");
-    toast.success("Promo code removed.");
+    toast.success(`Promo code ${codeToRemove || ""} removed.`);
   };
 
   const subtotal = totalPrice();
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === "percent") {
-      discountAmount = (subtotal * appliedCoupon.value) / 100;
-      if (appliedCoupon.max_discount) discountAmount = Math.min(discountAmount, appliedCoupon.max_discount);
+  
+  const couponDiscounts = couponsList.map((coupon) => {
+    let disc = 0;
+    if (coupon.type === "percent") {
+      disc = Math.round((subtotal * coupon.value) / 100);
+      if (coupon.max_discount) disc = Math.min(disc, coupon.max_discount);
     } else {
-      discountAmount = Math.min(appliedCoupon.value, subtotal);
+      disc = Math.min(Number(coupon.value), subtotal);
     }
-  }
+    return {
+      code: coupon.code,
+      label: coupon.label || (coupon.type === "percent" ? `${coupon.value}% off` : `₹${coupon.value} off`),
+      discount: disc,
+    };
+  });
+
+  const discountAmount = Math.min(
+    couponDiscounts.reduce((sum, c) => sum + c.discount, 0),
+    subtotal
+  );
   const finalTotal = Math.max(0, subtotal - discountAmount);
 
   if (!mounted) return null; // Avoid hydration mismatch
@@ -296,12 +328,19 @@ export default function CartPage() {
                         <span>Subtotal</span>
                         <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                       </div>
-                      {appliedCoupon && (
-                        <div className="flex justify-between text-emerald-700">
+                      {/* Individual Coupon Discounts */}
+                      {couponDiscounts.map((cd) => (
+                        <div key={cd.code} className="flex justify-between text-emerald-700">
                           <span className="flex items-center gap-1 font-medium">
-                            <Tag className="w-3.5 h-3.5" /> Discount ({appliedCoupon.code})
+                            <Tag className="w-3.5 h-3.5" /> Discount ({cd.code})
                           </span>
-                          <span className="font-bold">-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
+                          <span className="font-bold">-₹{cd.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
+                        </div>
+                      ))}
+                      {couponsList.length > 1 && (
+                        <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1">
+                          <span>Total Promo Savings</span>
+                          <span>-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                         </div>
                       )}
                       <div className="flex justify-between text-slate-600">
@@ -341,33 +380,51 @@ export default function CartPage() {
                   <div className="border border-slate-100 rounded-2xl p-6 bg-white shadow-soft-sm">
                     <h3 className="font-bold text-[#1C2A3A] mb-3 text-base flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-[#41542f]" /> Promo Code
+                        <Tag className="w-4 h-4 text-[#41542f]" /> Promo Codes
                       </span>
+                      {couponsList.length > 0 && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                          {couponsList.length}/3 Stacked
+                        </span>
+                      )}
                     </h3>
 
-                    {appliedCoupon ? (
-                      <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-600" />
-                          <div>
-                            <span className="font-mono font-bold text-emerald-800 text-sm tracking-wider">{appliedCoupon.code}</span>
-                            <p className="text-xs text-emerald-600 font-medium">{appliedCoupon.label || "Promo Applied"}</p>
+                    {/* Applied coupons list */}
+                    {couponsList.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {couponDiscounts.map((cd) => (
+                          <div
+                            key={cd.code}
+                            className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between transition-all animate-fade-in"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <div>
+                                <span className="font-mono font-bold text-emerald-800 text-sm tracking-wider">{cd.code}</span>
+                                <p className="text-xs text-emerald-700 font-medium">
+                                  {cd.label} • Saved ₹{cd.discount.toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCoupon(cd.code)}
+                              className="text-xs font-semibold text-red-500 hover:text-red-700 bg-white border border-red-200 px-2.5 py-1 rounded-lg transition-colors shadow-xs"
+                              title={`Remove ${cd.code}`}
+                            >
+                              Remove
+                            </button>
                           </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleRemoveCoupon}
-                          className="text-xs font-semibold text-red-500 hover:text-red-700 bg-white border border-red-200 px-2.5 py-1 rounded-lg transition-colors shadow-sm"
-                        >
-                          Remove
-                        </button>
+                        ))}
                       </div>
-                    ) : (
+                    )}
+
+                    {couponsList.length < 3 ? (
                       <form onSubmit={handleApplyCoupon} className="space-y-2">
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="ENTER CODE (E.G. WELCOME10)"
+                            placeholder={couponsList.length > 0 ? "ADD ANOTHER PROMO CODE" : "ENTER CODE (E.G. WELCOME10)"}
                             value={couponCode}
                             onChange={(e) => {
                               setCouponCode(e.target.value.toUpperCase());
@@ -390,7 +447,16 @@ export default function CartPage() {
                         {couponError && (
                           <p className="text-xs text-red-500 mt-1 font-medium">{couponError}</p>
                         )}
+                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                          ✨ Stack up to 3 coupons for extra savings on Flaunt Green!
+                        </p>
                       </form>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
+                        <p className="text-xs text-emerald-800 font-medium">
+                          🎉 Maximum 3 promo codes stacked for maximum savings!
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

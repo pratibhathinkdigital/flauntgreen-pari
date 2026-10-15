@@ -169,11 +169,69 @@ export const useCartStore = create(
         }
       },
 
+      appliedCoupons: [],
       appliedCoupon: null,
-      applyCoupon: (coupon) => set({ appliedCoupon: coupon }),
-      removeCoupon: () => set({ appliedCoupon: null }),
 
-      clearCart: () => set({ items: [], appliedCoupon: null }),
+      applyCoupon: (coupon) => {
+        if (!coupon || !coupon.code) return { success: false, message: "Invalid coupon" };
+        const currentCoupons = get().appliedCoupons || [];
+        const codeUpper = coupon.code.trim().toUpperCase();
+
+        if (currentCoupons.some((c) => c.code.toUpperCase() === codeUpper)) {
+          return { success: false, message: `Promo code "${coupon.code}" is already applied!` };
+        }
+
+        if (currentCoupons.length >= 3) {
+          return { success: false, message: "You can apply a maximum of 3 promo codes per order." };
+        }
+
+        const newCoupons = [...currentCoupons, { ...coupon, code: codeUpper }];
+        set({
+          appliedCoupons: newCoupons,
+          appliedCoupon: newCoupons[0] || null,
+        });
+
+        return { success: true };
+      },
+
+      removeCoupon: (code) => {
+        if (!code) {
+          set({ appliedCoupons: [], appliedCoupon: null });
+          return;
+        }
+        const codeUpper = code.trim().toUpperCase();
+        const updated = (get().appliedCoupons || []).filter(
+          (c) => c.code.toUpperCase() !== codeUpper
+        );
+        set({
+          appliedCoupons: updated,
+          appliedCoupon: updated[0] || null,
+        });
+      },
+
+      clearCoupons: () => set({ appliedCoupons: [], appliedCoupon: null }),
+
+      clearCart: () => set({ items: [], appliedCoupon: null, appliedCoupons: [] }),
+
+      getDiscountAmount: (subtotal) => {
+        const coupons = (get().appliedCoupons && get().appliedCoupons.length > 0)
+          ? get().appliedCoupons
+          : (get().appliedCoupon ? [get().appliedCoupon] : []);
+        
+        let totalDiscount = 0;
+        coupons.forEach((coupon) => {
+          let discount = 0;
+          if (coupon.type === "percent") {
+            discount = Math.round((subtotal * coupon.value) / 100);
+            if (coupon.max_discount) discount = Math.min(discount, coupon.max_discount);
+          } else if (coupon.type === "fixed") {
+            discount = Math.min(Number(coupon.value), subtotal);
+          }
+          totalDiscount += discount;
+        });
+
+        return Math.min(totalDiscount, subtotal);
+      },
 
       totalItems: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
 

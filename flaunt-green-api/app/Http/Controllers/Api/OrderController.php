@@ -66,6 +66,8 @@ class OrderController extends Controller
             'items.*.color'      => 'nullable|string',
             'items.*.image'      => 'nullable|string',
             'coupon_code'        => 'nullable|string',
+            'coupon_codes'       => 'nullable|array',
+            'coupon_codes.*'     => 'string',
         ]);
 
         // Server-side stock verification
@@ -103,15 +105,33 @@ class OrderController extends Controller
             }
         }
 
-        // Server-side coupon verification
+        // ── Server-side Multiple Coupon Stacking Verification ─────────────────
+        $couponCodes = [];
+        if (!empty($validated['coupon_codes']) && is_array($validated['coupon_codes'])) {
+            $couponCodes = $validated['coupon_codes'];
+        } elseif (!empty($validated['coupon_code'])) {
+            $couponCodes = explode(',', $validated['coupon_code']);
+        }
+
+        // Deduplicate and enforce max 3 stacked coupons
+        $cleanCodes = array_slice(array_unique(array_filter(array_map(function($c) {
+            return strtoupper(trim($c));
+        }, $couponCodes))), 0, 3);
+
         $discountAmount = 0;
-        if (!empty($validated['coupon_code'])) {
-            $coupon = \App\Models\Coupon::where('code', strtoupper(trim($validated['coupon_code'])))->first();
+        $validCoupons = [];
+        foreach ($cleanCodes as $code) {
+            $coupon = \App\Models\Coupon::where('code', $code)->first();
             $errorMessage = null;
             if ($coupon && $coupon->isValidFor($serverSubtotal, $errorMessage)) {
-                $discountAmount = $coupon->calculateDiscount($serverSubtotal);
+                $cDiscount = $coupon->calculateDiscount($serverSubtotal);
+                $discountAmount += $cDiscount;
+                $validCoupons[] = $coupon;
             }
         }
+
+        // Discount cannot exceed subtotal
+        $discountAmount = min($discountAmount, $serverSubtotal);
 
         $shippingCost = (float)($validated['shipping_cost'] ?? 0);
         $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $discountAmount);
@@ -121,6 +141,15 @@ class OrderController extends Controller
         if (abs($clientAmount - $serverCalculatedTotal) > 2) {
             \Illuminate\Support\Facades\Log::error("OrderController: COD Price mismatch. Client: {$clientAmount}, Server: {$serverCalculatedTotal} (Subtotal: {$serverSubtotal}, Disc: {$discountAmount}, Ship: {$shippingCost})");
             return response()->json(['error' => 'Price mismatch. Please refresh your cart and try again.'], 422);
+        }
+
+        $appliedCodesList = !empty($validCoupons)
+            ? implode(', ', array_map(fn($c) => $c->code, $validCoupons))
+            : null;
+
+        $orderNotes = $validated['notes'] ?? '';
+        if ($appliedCodesList) {
+            $orderNotes = "Coupons: [{$appliedCodesList}]" . ($orderNotes ? " | " . $orderNotes : "");
         }
 
         \Illuminate\Support\Facades\DB::beginTransaction();
@@ -138,7 +167,7 @@ class OrderController extends Controller
                 'payment_method'   => $validated['payment_method'],
                 'payment_status'   => 'pending',
                 'status'           => 'pending',
-                'notes'            => $validated['notes'] ?? null,
+                'notes'            => $orderNotes,
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -169,6 +198,11 @@ class OrderController extends Controller
                         $variant->decrement('stock', $deductQty);
                     }
                 }
+            }
+
+            // Atomically increment usage count for each successfully applied coupon
+            foreach ($validCoupons as $appliedCoupon) {
+                $appliedCoupon->increment('used_count');
             }
 
             \Illuminate\Support\Facades\DB::commit();

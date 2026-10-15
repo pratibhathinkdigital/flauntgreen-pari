@@ -157,12 +157,14 @@ export const journalApi = {
 // ── Coupons & Marketing ───────────────────────────────────────────────────────
 
 export const couponsApi = {
-  validate:       (code, subtotal) => api.post("/coupons/validate", { code, subtotal }),
-  adminGetAll:    ()               => api.get("/admin/coupons"),
-  adminCreate:    (data)           => api.post("/admin/coupons", data),
-  adminUpdate:    (id, data)       => api.put(`/admin/coupons/${id}`, data),
-  adminDelete:    (id)             => api.delete(`/admin/coupons/${id}`),
-  adminSendEmail: (id, data)       => api.post(`/admin/coupons/${id}/send-email`, data),
+  validate:               (code, subtotal) => api.post("/coupons/validate", { code, subtotal }),
+  validateMultiple:       (codes, subtotal) => api.post("/coupons/validate", { codes, subtotal }),
+  adminGetAll:            ()               => api.get("/admin/coupons"),
+  adminCreate:            (data)           => api.post("/admin/coupons", data),
+  adminUpdate:            (id, data)       => api.put(`/admin/coupons/${id}`, data),
+  adminDelete:            (id)             => api.delete(`/admin/coupons/${id}`),
+  adminSendEmail:         (id, data)       => api.post(`/admin/coupons/${id}/send-email`, data),
+  adminSendMultipleEmail: (data)           => api.post("/admin/coupons/send-multiple-email", data),
 };
 
 // ── Contact & Enquiries ────────────────────────────────────────────────────────
