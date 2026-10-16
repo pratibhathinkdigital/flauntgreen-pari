@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2, ArrowLeft, Check, Image as ImageIcon, Upload } from "lucide-react";
+import { X, Plus, Trash2, ArrowLeft, Check, Image as ImageIcon, Upload, Copy } from "lucide-react";
 import { productsApi, categoriesApi, collectionsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
@@ -69,7 +69,52 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
   };
 
   const handleAddVariant = () => {
-    setVariants([...variants, { size: "S", stock: 0, color_name: "", image: null, imageFile: null, remove_image: false, sku: "" }]);
+    if (variants.length > 0) {
+      const last = variants[variants.length - 1];
+      const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+      const currentUpper = (last.size || "").trim().toUpperCase();
+      const idx = SIZE_ORDER.indexOf(currentUpper);
+      const nextSize = idx !== -1 && idx < SIZE_ORDER.length - 1 ? SIZE_ORDER[idx + 1] : (last.size || "S");
+
+      setVariants([
+        ...variants,
+        {
+          size: nextSize,
+          stock: last.stock !== undefined && last.stock !== "" ? last.stock : 0,
+          color_name: last.color_name || "",
+          image: last.image || null,
+          imageFile: last.imageFile || null,
+          remove_image: false,
+          sku: "",
+        }
+      ]);
+    } else {
+      setVariants([
+        ...variants,
+        { size: "S", stock: 0, color_name: "", image: null, imageFile: null, remove_image: false, sku: "" }
+      ]);
+    }
+  };
+
+  const handleDuplicateVariant = (index) => {
+    const source = variants[index];
+    const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+    const currentUpper = (source.size || "").trim().toUpperCase();
+    const idx = SIZE_ORDER.indexOf(currentUpper);
+    const nextSize = idx !== -1 && idx < SIZE_ORDER.length - 1 ? SIZE_ORDER[idx + 1] : (source.size || "S");
+
+    const newVariant = {
+      size: nextSize,
+      stock: source.stock !== undefined && source.stock !== "" ? source.stock : 0,
+      color_name: source.color_name || "",
+      image: source.image || null,
+      imageFile: source.imageFile || null,
+      remove_image: false,
+      sku: "",
+    };
+    const updated = [...variants];
+    updated.splice(index + 1, 0, newVariant);
+    setVariants(updated);
   };
 
   const handleAddInspirationColor = () => {
@@ -466,8 +511,21 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                           </div>
                         </div>
 
-                        <div className="col-span-2 sm:col-span-1 flex justify-end">
-                          <button type="button" onClick={() => handleRemoveVariant(index, v.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete variant">
+                        <div className="col-span-2 sm:col-span-1 flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicateVariant(index)}
+                            className="p-1.5 text-slate-400 hover:text-[#997b47] hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Duplicate this variant"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveVariant(index, v.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete variant"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
