@@ -35,7 +35,8 @@ export default function CartPage() {
   }, [clearCart, syncStockWithBackend]);
 
   const handleApplyCoupon = async (e) => {
-    e?.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     const cleaned = couponCode.trim().toUpperCase();
     if (!cleaned) return;
 
@@ -498,7 +499,7 @@ export default function CartPage() {
                     )}
 
                     {couponsList.length < 3 ? (
-                      <form onSubmit={handleApplyCoupon} className="space-y-2">
+                      <div className="space-y-2">
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -514,10 +515,18 @@ export default function CartPage() {
                               setCouponCode(e.target.value.toUpperCase());
                               if (couponError) setCouponError("");
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleApplyCoupon(e);
+                              }
+                            }}
                             className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] text-sm uppercase font-mono tracking-wider placeholder:normal-case placeholder:font-sans"
                           />
                           <button
-                            type="submit"
+                            type="button"
+                            onClick={handleApplyCoupon}
                             disabled={couponLoading || !couponCode.trim()}
                             className="px-5 py-2.5 rounded-xl bg-[#41542f] text-white font-medium hover:bg-[#344325] transition-colors text-sm disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                           >
@@ -536,7 +545,7 @@ export default function CartPage() {
                         <p className="text-[11px] text-slate-500 mt-1 font-medium flex items-center gap-1">
                           <span>💡 Tip: Apply up to 3 coupons one by one to combine all discounts together!</span>
                         </p>
-                      </form>
+                      </div>
                     ) : (
                       <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
                         <p className="text-xs text-emerald-800 font-semibold flex items-center justify-center gap-1.5">

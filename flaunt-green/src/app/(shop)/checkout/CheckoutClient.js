@@ -169,6 +169,7 @@ export default function CheckoutClient() {
     });
   };
 
+  // Mount Effect: Only run ONCE on page load (Never re-run when coupons change)
   useEffect(() => {
     setMounted(true);
     loadRazorpaySDK();
@@ -190,13 +191,7 @@ export default function CheckoutClient() {
       }));
     }
 
-    if (storeCoupons && storeCoupons.length > 0) {
-      setAppliedCoupons(storeCoupons);
-    } else if (cartCoupon) {
-      setAppliedCoupons([cartCoupon]);
-    }
-
-    // Load saved addresses for logged-in user
+    // Load saved addresses ONCE for logged-in user
     const fetchSavedAddresses = async () => {
       try {
         setLoadingAddresses(true);
@@ -218,6 +213,15 @@ export default function CheckoutClient() {
     };
 
     fetchSavedAddresses();
+  }, []); // Empty dependency array ensures addresses and form are NEVER reloaded or wiped out
+
+  // Separate Coupon Sync Effect: Only syncs coupon state, NEVER touches address formData
+  useEffect(() => {
+    if (storeCoupons && storeCoupons.length > 0) {
+      setAppliedCoupons(storeCoupons);
+    } else if (cartCoupon) {
+      setAppliedCoupons([cartCoupon]);
+    }
   }, [cartCoupon, storeCoupons]);
 
   if (!mounted) return null;
@@ -269,7 +273,8 @@ export default function CheckoutClient() {
 
   // Coupon apply
   const handleApplyCoupon = async (e) => {
-    e?.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     setCouponError("");
     const cleaned = couponInput.trim().toUpperCase();
     if (!cleaned) return;
@@ -1532,7 +1537,7 @@ export default function CheckoutClient() {
 
                   {/* Promo Input Field (allows up to 3 coupons) */}
                   {appliedCoupons.length < 3 ? (
-                    <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+                    <div className="space-y-1.5">
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -1548,10 +1553,18 @@ export default function CheckoutClient() {
                             setCouponInput(e.target.value);
                             setCouponError("");
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleApplyCoupon(e);
+                            }
+                          }}
                           className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#997b47] uppercase font-mono placeholder:font-sans placeholder:normal-case"
                         />
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleApplyCoupon}
                           disabled={couponLoading || !couponInput.trim()}
                           className="px-4 py-2 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-colors disabled:opacity-50 flex items-center gap-1 shadow-sm whitespace-nowrap"
                         >
@@ -1568,7 +1581,7 @@ export default function CheckoutClient() {
                       <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
                         <span>💡 Tip: Enter each code one by one to combine discounts.</span>
                       </p>
-                    </form>
+                    </div>
                   ) : (
                     <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
                       <p className="text-[11px] text-emerald-800 font-semibold flex items-center justify-center gap-1.5">
