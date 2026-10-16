@@ -74,6 +74,7 @@ class ProductController extends Controller
             'variants.*.size' => 'required|string|max:255',
             'variants.*.color_name' => 'nullable|string|max:255',
             'variants.*.color_hex' => 'nullable|string|max:255',
+            'variants.*.image' => 'nullable',
             'variants.*.stock' => 'required|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255',
         ]);
@@ -98,9 +99,9 @@ class ProductController extends Controller
 
             $product = Product::create($validated);
 
-            // Handle images (enforce maximum 5 images)
+            // Handle images (allow up to 12 product gallery images)
             if ($request->hasFile('images')) {
-                $imageFiles = array_slice($request->file('images'), 0, 5);
+                $imageFiles = array_slice($request->file('images'), 0, 12);
                 foreach ($imageFiles as $index => $file) {
                     $path = $file->store('products', 'public');
                     ProductImage::create([
@@ -112,8 +113,11 @@ class ProductController extends Controller
                 }
             }
 
-            // Handle variants
-            foreach ($variants as $variantData) {
+            // Handle variants with optional fabric texture images
+            foreach ($variants as $index => $variantData) {
+                if ($request->hasFile("variant_image_{$index}")) {
+                    $variantData['image'] = $request->file("variant_image_{$index}")->store('variants', 'public');
+                }
                 $product->variants()->create($variantData);
             }
 
@@ -189,6 +193,7 @@ class ProductController extends Controller
             'variants.*.size' => 'required_with:variants|string|max:255',
             'variants.*.color_name' => 'nullable|string|max:255',
             'variants.*.color_hex' => 'nullable|string|max:255',
+            'variants.*.image' => 'nullable',
             'variants.*.stock' => 'required_with:variants|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255',
             'deleted_images' => 'nullable|array',
@@ -224,9 +229,15 @@ class ProductController extends Controller
                 $product->variants()->whereIn('id', $validated['deleted_variants'])->delete();
             }
 
-            // Handle updated/new variants
+            // Handle updated/new variants with fabric texture images
             if (isset($validated['variants'])) {
-                foreach ($validated['variants'] as $variantData) {
+                foreach ($validated['variants'] as $index => $variantData) {
+                    if ($request->hasFile("variant_image_{$index}")) {
+                        $variantData['image'] = $request->file("variant_image_{$index}")->store('variants', 'public');
+                    } elseif ($request->boolean("variant_remove_image_{$index}")) {
+                        $variantData['image'] = null;
+                    }
+
                     if (isset($variantData['id'])) {
                         $product->variants()->where('id', $variantData['id'])->update($variantData);
                     } else {
@@ -244,10 +255,10 @@ class ProductController extends Controller
                 }
             }
 
-            // Handle new images (uploaded files) with 5 total images limit
+            // Handle new images (uploaded files) with 12 total images limit
             if ($request->hasFile('images')) {
                 $currentCount = $product->images()->count();
-                $allowedCount = max(0, 5 - $currentCount);
+                $allowedCount = max(0, 12 - $currentCount);
                 if ($allowedCount > 0) {
                     $imageFiles = array_slice($request->file('images'), 0, $allowedCount);
                     $maxSortOrder = $product->images()->max('sort_order') ?? -1;

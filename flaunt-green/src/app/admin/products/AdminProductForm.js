@@ -1,27 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2, ArrowLeft, Check } from "lucide-react";
+import { X, Plus, Trash2, ArrowLeft, Check, Image as ImageIcon, Upload } from "lucide-react";
 import { productsApi, categoriesApi, collectionsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
 import toast from "react-hot-toast";
-
-const isValidHex = (hex) => /^#[0-9A-F]{6}$/i.test(hex || "");
-
-const PRESET_PALETTE = [
-  { name: "Olive Green", hex: "#41542f" },
-  { name: "Forest Green", hex: "#234027" },
-  { name: "Terracotta", hex: "#b05b3b" },
-  { name: "Sand Gold", hex: "#997b47" },
-  { name: "Sage", hex: "#8a9a86" },
-  { name: "Navy Blue", hex: "#1c2a38" },
-  { name: "Camel", hex: "#c19a6b" },
-  { name: "Crimson Red", hex: "#dc2626" },
-  { name: "Blush Pink", hex: "#f472b6" },
-  { name: "Mustard", hex: "#eab308" },
-  { name: "Charcoal", hex: "#1f2937" },
-  { name: "Pure White", hex: "#ffffff" },
-];
 
 export default function AdminProductForm({ product = null, onClose, onSuccess }) {
   const [categories, setCategories] = useState([]);
@@ -86,7 +69,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
   };
 
   const handleAddVariant = () => {
-    setVariants([...variants, { size: "S", stock: 0, color_name: "", color_hex: "", sku: "" }]);
+    setVariants([...variants, { size: "S", stock: 0, color_name: "", image: null, imageFile: null, remove_image: false, sku: "" }]);
   };
 
   const handleAddInspirationColor = () => {
@@ -123,16 +106,16 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
   const handleImageChange = (e) => {
     if (!e.target.files) return;
     const selectedFiles = Array.from(e.target.files);
-    const availableSlots = 5 - (existingImages.length + images.length);
+    const availableSlots = 12 - (existingImages.length + images.length);
 
     if (availableSlots <= 0) {
-      toast.error("Maximum 5 product images allowed. Please delete an image first.");
+      toast.error("Maximum 12 product images allowed. Please delete an image first.");
       e.target.value = "";
       return;
     }
 
     if (selectedFiles.length > availableSlots) {
-      toast.error(`Only ${availableSlots} more image(s) can be added (Maximum 5 images allowed).`);
+      toast.error(`Only ${availableSlots} more image(s) can be added (Maximum 12 images allowed).`);
       setImages([...images, ...selectedFiles.slice(0, availableSlots)]);
     } else {
       setImages([...images, ...selectedFiles]);
@@ -154,8 +137,8 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (existingImages.length + images.length > 5) {
-      toast.error("A product can have a maximum of 5 images. Please remove extra images.");
+    if (existingImages.length + images.length > 12) {
+      toast.error("A product can have a maximum of 12 images. Please remove extra images.");
       return;
     }
 
@@ -170,7 +153,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
       }
     });
 
-    // Append variants
+    // Append variants with fabric texture images
     variants.forEach((variant, i) => {
       if (variant.id) submitData.append(`variants[${i}][id]`, variant.id);
       submitData.append(`variants[${i}][size]`, variant.size);
@@ -178,6 +161,14 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
       if (variant.color_name) submitData.append(`variants[${i}][color_name]`, variant.color_name);
       if (variant.color_hex) submitData.append(`variants[${i}][color_hex]`, variant.color_hex);
       if (variant.sku) submitData.append(`variants[${i}][sku]`, variant.sku);
+
+      if (variant.imageFile) {
+        submitData.append(`variant_image_${i}`, variant.imageFile);
+      } else if (variant.remove_image) {
+        submitData.append(`variant_remove_image_${i}`, "1");
+      } else if (variant.image && typeof variant.image === "string") {
+        submitData.append(`variants[${i}][image]`, variant.image);
+      }
     });
 
     // Append inspiration banner image (single full-width image)
@@ -384,7 +375,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                   <p className="text-sm text-amber-800 font-medium">⚠️ No stock variants found. Product will show as <span className="font-bold text-red-600">Out of Stock</span>.</p>
                   <button
                     type="button"
-                    onClick={() => setVariants([{ size: "Standard", stock: 10, color_name: "", color_hex: "", sku: "" }])}
+                    onClick={() => setVariants([{ size: "Standard", stock: 10, color_name: "", image: null, imageFile: null, remove_image: false, sku: "" }])}
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#997b47] text-white text-xs font-bold rounded-lg hover:bg-[#836838] transition-colors"
                   >
                     <Plus className="w-4 h-4" /> Quick Add Stock (10 Units)
@@ -403,60 +394,83 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                           <label className="text-xs font-semibold text-slate-600">Stock</label>
                           <input type="number" value={v.stock ?? ""} onChange={(e) => handleVariantChange(index, 'stock', e.target.value)} required min="0" className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none font-bold text-[#41542f] bg-white focus:border-[#997b47]" placeholder="0" />
                         </div>
-                        <div className="col-span-6 sm:col-span-4 space-y-1">
-                          <label className="text-xs font-semibold text-slate-600">Color Name (Opt)</label>
-                          <input type="text" value={v.color_name || ""} onChange={(e) => handleVariantChange(index, 'color_name', e.target.value)} className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none bg-white focus:border-[#997b47]" placeholder="e.g. Olive Green" />
+                        <div className="col-span-6 sm:col-span-3 space-y-1">
+                          <label className="text-xs font-semibold text-slate-600">Color / Fabric (Opt)</label>
+                          <input type="text" value={v.color_name || ""} onChange={(e) => handleVariantChange(index, 'color_name', e.target.value)} className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none bg-white focus:border-[#997b47]" placeholder="e.g. Indigo Khadi" />
                         </div>
-                        <div className="col-span-10 sm:col-span-3 space-y-1">
-                          <label className="text-xs font-semibold text-slate-600">Color Palette / Hex</label>
-                          <div className="flex items-center gap-1.5">
-                            {/* Interactive Color Picker Swatch */}
-                            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-300 shadow-xs shrink-0 cursor-pointer group" title="Click to open color palette picker">
-                              <input
-                                type="color"
-                                value={isValidHex(v.color_hex) ? v.color_hex : "#41542f"}
-                                onChange={(e) => handleVariantChange(index, 'color_hex', e.target.value)}
-                                className="absolute -top-3 -left-3 w-14 h-14 cursor-pointer border-0 p-0"
-                              />
+                        
+                        {/* Fabric Texture Image Upload (Replaces flat color palette) */}
+                        <div className="col-span-10 sm:col-span-4 space-y-1">
+                          <label className="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                            <span>Fabric Texture Image</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Fabric swatch / photo</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {/* Preview Thumbnail */}
+                            {v.imageFile || (v.image && !v.remove_image) ? (
+                              <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-300 shrink-0 bg-slate-100 group shadow-xs">
+                                <img
+                                  src={v.imageFile ? URL.createObjectURL(v.imageFile) : getImageUrl(v.image)}
+                                  alt="Fabric Texture"
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleVariantChange(index, 'imageFile', null);
+                                    handleVariantChange(index, 'remove_image', true);
+                                  }}
+                                  className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Remove texture photo"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="w-10 h-10 rounded-lg border border-dashed border-slate-300 hover:border-[#997b47] hover:bg-amber-50/50 flex items-center justify-center cursor-pointer transition-colors shrink-0 text-slate-400 hover:text-[#997b47]" title="Upload fabric texture image">
+                                <ImageIcon className="w-4 h-4" />
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      handleVariantChange(index, 'imageFile', e.target.files[0]);
+                                      handleVariantChange(index, 'remove_image', false);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
+
+                            {/* Upload / Replace Button */}
+                            <div className="flex-1 min-w-0">
+                              <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-white hover:border-[#997b47] cursor-pointer transition-all w-full truncate bg-white shadow-2xs">
+                                <Upload className="w-3 h-3 shrink-0 text-[#997b47]" />
+                                <span className="truncate">
+                                  {v.imageFile ? v.imageFile.name : (v.image && !v.remove_image) ? "Replace Texture" : "Upload Fabric Image"}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      handleVariantChange(index, 'imageFile', e.target.files[0]);
+                                      handleVariantChange(index, 'remove_image', false);
+                                    }
+                                  }}
+                                />
+                              </label>
                             </div>
-                            <input
-                              type="text"
-                              value={v.color_hex || ""}
-                              onChange={(e) => handleVariantChange(index, 'color_hex', e.target.value)}
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono uppercase outline-none bg-white focus:border-[#997b47]"
-                              placeholder="#41542F"
-                            />
                           </div>
                         </div>
+
                         <div className="col-span-2 sm:col-span-1 flex justify-end">
                           <button type="button" onClick={() => handleRemoveVariant(index, v.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete variant">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
-
-                      {/* Quick Color Palette Swatches */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/60">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Palette:</span>
-                        {PRESET_PALETTE.map((preset) => (
-                          <button
-                            key={preset.hex}
-                            type="button"
-                            onClick={() => {
-                              handleVariantChange(index, 'color_hex', preset.hex);
-                              if (!v.color_name || v.color_name.trim() === "") {
-                                handleVariantChange(index, 'color_name', preset.name);
-                              }
-                            }}
-                            className={`w-5 h-5 rounded-full border transition-all hover:scale-125 shadow-xs ${
-                              v.color_hex?.toLowerCase() === preset.hex.toLowerCase()
-                                ? "ring-2 ring-[#41542f] ring-offset-1 border-white scale-110"
-                                : "border-slate-300 hover:border-slate-400"
-                            }`}
-                            style={{ backgroundColor: preset.hex }}
-                            title={`${preset.name} (${preset.hex})`}
-                          />
-                        ))}
                       </div>
                     </div>
                   ))}
@@ -529,17 +543,17 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  Product Images
+                  Product Gallery
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                    existingImages.length + images.length >= 5
+                    existingImages.length + images.length >= 12
                       ? "bg-amber-100 text-amber-800 border border-amber-300"
                       : "bg-[#41542f]/10 text-[#41542f] border border-[#41542f]/20"
                   }`}>
-                    {existingImages.length + images.length} / 5
+                    {existingImages.length + images.length} / 12
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Maximum 5 images allowed to maintain proper UI alignment on product page.
+                  Upload up to 12 images: Front, back, side styling angles, and fabric texture close-ups.
                 </p>
               </div>
             </div>
@@ -560,9 +574,9 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
 
             {/* New Images */}
             <div className="space-y-2">
-              {existingImages.length + images.length >= 5 ? (
+              {existingImages.length + images.length >= 12 ? (
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium">
-                  Maximum 5 images limit reached. Remove an image above if you want to upload a different one.
+                  Maximum 12 images limit reached. Remove an image above if you want to upload a different one.
                 </div>
               ) : (
                 <input

@@ -22,12 +22,12 @@ import { formatPrice } from "@/lib/utils";
 
 /* ─── Product Data ─────────────────────────────────────────────────────────── */
 
-/* ─── Thumbnail Gallery (Strict 5 images max) ──────────────────────────────── */
+/* ─── Thumbnail Gallery (Supports up to 12 images) ─────────────────────────── */
 function ImageGallery({ images = [] }) {
   const [activeIdx, setActiveIdx] = useState(0);
 
-  // Strictly enforce max 5 images to keep the UI perfectly aligned
-  const displayImages = (images || []).slice(0, 5);
+  // Allow up to 12 images with smooth vertical scroll for angles & fabric closeups
+  const displayImages = (images || []).slice(0, 12);
   const safeIdx = activeIdx < displayImages.length ? activeIdx : 0;
 
   return (
@@ -151,38 +151,58 @@ function SizeSelector({ sizes, inventory, selected, onSelect, onOpenGuide }) {
   );
 }
 
-/* ─── Color Selector (square, reflects selected variant) ──────────────────── */
+/* ─── Fabric / Color Selector (renders fabric texture photo or color fallback) ── */
 function ColorSelector({ colors, selected, onSelect }) {
+  if (!colors || colors.length === 0 || (colors.length === 1 && colors[0].name === "Default" && !colors[0].image)) {
+    return null;
+  }
+
+  const hasAnyImages = colors.some(c => !!c.image);
+
   return (
     <div>
       <span className="text-sm font-medium text-gray-800 mb-2 block">
-        Color:{" "}
+        {hasAnyImages ? "Fabric Texture / Color: " : "Color: "}
         <span className="font-normal" style={{ color: "#B08D3F" }}>
           {colors[selected]?.name}
         </span>
       </span>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 flex-wrap">
         {colors.map((color, i) => {
           const isSelected = selected === i;
           return (
             <button
-              key={color.name}
+              key={(color.name || "c") + i}
               onClick={() => onSelect(i)}
               aria-label={color.name}
               aria-pressed={isSelected}
               title={color.name}
-              className={`w-9 h-9 rounded-none border flex items-center justify-center transition-all duration-200 ${
+              className={`relative rounded-lg border overflow-hidden flex items-center justify-center transition-all duration-200 ${
                 isSelected
-                  ? "border-gray-900 ring-2 ring-gray-900 ring-offset-1"
-                  : "border-gray-300 hover:border-gray-600"
+                  ? "border-[#41542f] ring-2 ring-[#41542f] ring-offset-2 scale-105 shadow-sm"
+                  : "border-gray-300 hover:border-gray-500 hover:scale-102"
               }`}
-              style={{ backgroundColor: color.value }}
+              style={{ width: "44px", height: "44px" }}
             >
-              {isSelected && (
-                <Check
-                  className="w-4 h-4 text-white"
-                  style={{ filter: "drop-shadow(0 0 1px rgba(0,0,0,0.75))" }}
+              {color.image ? (
+                <img
+                  src={color.image}
+                  alt={color.name}
+                  className="w-full h-full object-cover"
                 />
+              ) : (
+                <div
+                  className="w-full h-full"
+                  style={{ backgroundColor: color.value || "#e2e8f0" }}
+                />
+              )}
+              {isSelected && (
+                <span className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                  <Check
+                    className="w-4 h-4 text-white"
+                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.85))" }}
+                  />
+                </span>
               )}
             </button>
           );
@@ -649,8 +669,15 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
       size: apiProduct.model_size || "M" 
     },
     colors: apiProduct.variants && apiProduct.variants.length > 0
-      ? [...new Map(apiProduct.variants.map(v => [v.color_name || "Default", { name: v.color_name || "Default", value: v.color_hex || "#888888" }])).values()]
-      : [{ name: "Default", value: "#888888" }],
+      ? [...new Map(apiProduct.variants.map(v => [
+          v.color_name || "Default", 
+          { 
+            name: v.color_name || "Default", 
+            value: v.color_hex || "#888888",
+            image: v.image ? getImageUrl(v.image) : null,
+          }
+        ])).values()]
+      : [{ name: "Default", value: "#888888", image: null }],
     sizes: apiProduct.variants && apiProduct.variants.length > 0
       ? [...new Set(apiProduct.variants.filter(v => v.stock > 0 || true).map(v => v.size))].filter(Boolean)
       : ["S", "M", "L", "XL"],
