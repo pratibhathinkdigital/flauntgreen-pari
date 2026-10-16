@@ -59,3 +59,34 @@ Route::get('/test-email', function () {
         return 'SMTP Error: ' . $e->getMessage();
     }
 });
+
+// Helper route to test Razorpay configuration on Hostinger
+Route::get('/test-razorpay', function () {
+    $key = config('services.razorpay.key') ?: env('RAZORPAY_KEY') ?: 'rzp_test_TZnxa9wE9HqL4W';
+    $secret = config('services.razorpay.secret') ?: env('RAZORPAY_SECRET') ?: 'xYEOMkMZmXNanLnE7UBEoIQo';
+
+    if (!$key || !$secret) {
+        return response()->json(['configured' => false, 'error' => 'Razorpay keys missing from config/services.php and .env']);
+    }
+
+    try {
+        $api = new \Razorpay\Api\Api($key, $secret);
+        $order = $api->order->create([
+            'receipt'  => 'test_' . uniqid(),
+            'amount'   => 100, // ₹1
+            'currency' => 'INR',
+        ]);
+        return response()->json([
+            'configured'       => true,
+            'test_order_id'    => $order['id'],
+            'key_used'         => substr($key, 0, 8) . '...',
+            'message'          => 'Razorpay connection working successfully!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'configured' => true,
+            'key_used'   => substr($key, 0, 8) . '...',
+            'error'      => $e->getMessage(),
+        ], 500);
+    }
+});

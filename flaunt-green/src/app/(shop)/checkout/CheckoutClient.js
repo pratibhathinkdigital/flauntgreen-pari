@@ -490,7 +490,7 @@ export default function CheckoutClient() {
         // 2. Open Razorpay Checkout Modal
         try {
           const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
+            key: razorpayOrderData.razorpay_key || process.env.NEXT_PUBLIC_RAZORPAY_KEY || "rzp_test_TZnxa9wE9HqL4W",
             amount: razorpayOrderData.amount,
             currency: razorpayOrderData.currency,
             name: "Flaunt Green",

@@ -14,14 +14,23 @@ use Illuminate\Support\Facades\DB;
 class PaymentController extends Controller
 {
     private $razorpay;
+    private $key;
+    private $secret;
 
     public function __construct()
     {
-        $key = config('services.razorpay.key');
-        $secret = config('services.razorpay.secret');
+        $this->key = config('services.razorpay.key')
+            ?: env('RAZORPAY_KEY')
+            ?: env('RAZORPAY_KEY_ID')
+            ?: 'rzp_test_TZnxa9wE9HqL4W';
 
-        if ($key && $secret) {
-            $this->razorpay = new Api($key, $secret);
+        $this->secret = config('services.razorpay.secret')
+            ?: env('RAZORPAY_SECRET')
+            ?: env('RAZORPAY_KEY_SECRET')
+            ?: 'xYEOMkMZmXNanLnE7UBEoIQo';
+
+        if ($this->key && $this->secret) {
+            $this->razorpay = new Api($this->key, $this->secret);
         }
     }
 
@@ -178,10 +187,11 @@ class PaymentController extends Controller
             DB::commit();
 
             return response()->json([
-                'id'          => $razorpayOrder['id'],
-                'amount'      => $razorpayOrder['amount'],
-                'currency'    => $razorpayOrder['currency'],
-                'db_order_id' => $order->id,
+                'id'           => $razorpayOrder['id'],
+                'amount'       => $razorpayOrder['amount'],
+                'currency'     => $razorpayOrder['currency'],
+                'db_order_id'  => $order->id,
+                'razorpay_key' => $this->key,
             ]);
 
         } catch (\Exception $e) {
