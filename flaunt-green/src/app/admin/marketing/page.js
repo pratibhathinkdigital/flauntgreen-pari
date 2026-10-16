@@ -208,6 +208,20 @@ export default function AdminMarketingPage() {
     }
   };
 
+  // Helper: Check if a coupon is currently active, unexpired, and within usage limits
+  const isCouponValidAndActive = (c) => {
+    if (!c.is_active) return false;
+    if (c.expires_at) {
+      const exp = new Date(c.expires_at);
+      if (typeof c.expires_at === "string" && c.expires_at.length <= 10) {
+        exp.setHours(23, 59, 59, 999);
+      }
+      if (exp.getTime() < Date.now()) return false;
+    }
+    if (c.usage_limit && Number(c.used_count) >= Number(c.usage_limit)) return false;
+    return true;
+  };
+
   // Multi-coupon Selection Helpers
   const toggleSelectCoupon = (id) => {
     setSelectedCouponIds((prev) =>
@@ -216,7 +230,8 @@ export default function AdminMarketingPage() {
   };
 
   const toggleSelectAll = () => {
-    const visibleIds = paginatedCoupons.map((c) => c.id);
+    const validVisible = paginatedCoupons.filter(isCouponValidAndActive);
+    const visibleIds = validVisible.map((c) => c.id);
     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedCouponIds.includes(id));
     if (allSelected) {
       setSelectedCouponIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
@@ -226,14 +241,14 @@ export default function AdminMarketingPage() {
   };
 
   const openMultiSendModal = (preselected = []) => {
-    const activeCoupons = coupons.filter((c) => c.is_active);
+    const validCoupons = coupons.filter(isCouponValidAndActive);
     let initialIds = [];
     if (preselected && preselected.length > 0) {
-      initialIds = preselected;
+      initialIds = preselected.filter((id) => validCoupons.some((c) => c.id === id));
     } else if (selectedCouponIds.length > 0) {
-      initialIds = selectedCouponIds;
+      initialIds = selectedCouponIds.filter((id) => validCoupons.some((c) => c.id === id));
     } else {
-      initialIds = activeCoupons.slice(0, 2).map((c) => c.id);
+      initialIds = validCoupons.slice(0, 2).map((c) => c.id);
     }
 
     setMultiSelectedCouponIds(initialIds);
@@ -470,11 +485,16 @@ export default function AdminMarketingPage() {
               <label className="flex items-center gap-2 cursor-pointer hover:text-slate-800">
                 <input
                   type="checkbox"
-                  checked={paginatedCoupons.length > 0 && paginatedCoupons.every((c) => selectedCouponIds.includes(c.id))}
+                  checked={
+                    paginatedCoupons.filter(isCouponValidAndActive).length > 0 &&
+                    paginatedCoupons
+                      .filter(isCouponValidAndActive)
+                      .every((c) => selectedCouponIds.includes(c.id))
+                  }
                   onChange={toggleSelectAll}
                   className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300"
                 />
-                <span>Select Page Coupons ({paginatedCoupons.length})</span>
+                <span>Select Active Coupons ({paginatedCoupons.filter(isCouponValidAndActive).length})</span>
               </label>
               <span>{filtered.length} total coupons</span>
             </div>
@@ -497,8 +517,10 @@ export default function AdminMarketingPage() {
                     <input
                       type="checkbox"
                       checked={isSelected}
+                      disabled={isExpired || !c.is_active}
                       onChange={() => toggleSelectCoupon(c.id)}
-                      className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300 mt-1 sm:mt-0 cursor-pointer"
+                      className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300 mt-1 sm:mt-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={isExpired ? "Expired coupon cannot be selected" : !c.is_active ? "Inactive coupon" : ""}
                     />
                     <div className="flex flex-col items-start gap-1">
                       <span className="font-mono font-bold text-sm tracking-wider px-3.5 py-1.5 rounded-xl bg-[#41542f]/10 text-[#41542f] border border-[#41542f]/20 shadow-xs">
@@ -547,13 +569,24 @@ export default function AdminMarketingPage() {
                     </div>
 
                     {/* Send Code via Email Button */}
-                    <button
-                      onClick={() => openSendModal(c)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-[#997b47] hover:bg-amber-100 border border-amber-200 text-xs font-semibold transition-all shadow-xs"
-                      title="Send this code to customer via email"
-                    >
-                      <Send className="w-3.5 h-3.5" /> Send to Customer
-                    </button>
+                    {isExpired || !c.is_active ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed opacity-60"
+                        title={isExpired ? "Expired coupon cannot be sent" : "Inactive coupon"}
+                      >
+                        <Send className="w-3.5 h-3.5" /> Send to Customer
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openSendModal(c)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-[#997b47] hover:bg-amber-100 border border-amber-200 text-xs font-semibold transition-all shadow-xs"
+                        title="Send this code to customer via email"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Send to Customer
+                      </button>
+                    )}
 
                     {/* Delete Button */}
                     <button
@@ -958,50 +991,56 @@ export default function AdminMarketingPage() {
                     Select Coupons to Include ({multiSelectedCouponIds.length} Selected) *
                   </label>
                   <span className="text-[11px] text-[#41542f] font-semibold">
-                    Client can stack these at checkout!
+                    Active &amp; unexpired coupons only
                   </span>
                 </div>
 
                 <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-52 overflow-y-auto bg-slate-50/30 p-1">
-                  {coupons
-                    .filter((c) => c.is_active)
-                    .map((c) => {
-                      const isSelected = multiSelectedCouponIds.includes(c.id);
-                      const discountStr = c.type === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`;
-                      return (
-                        <label
-                          key={c.id}
-                          className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${
-                            isSelected ? "bg-emerald-50/80 border border-emerald-200" : "hover:bg-slate-100/60"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleMultiModalCoupon(c.id)}
-                              className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300"
-                            />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-xs text-[#41542f] bg-white px-2 py-0.5 rounded border border-slate-200">
-                                  {c.code}
-                                </span>
-                                <span className="font-bold text-xs text-slate-800">{discountStr}</span>
+                  {coupons.filter(isCouponValidAndActive).length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-500 font-medium">
+                      No active or unexpired coupons available to share.
+                    </div>
+                  ) : (
+                    coupons
+                      .filter(isCouponValidAndActive)
+                      .map((c) => {
+                        const isSelected = multiSelectedCouponIds.includes(c.id);
+                        const discountStr = c.type === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`;
+                        return (
+                          <label
+                            key={c.id}
+                            className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${
+                              isSelected ? "bg-emerald-50/80 border border-emerald-200" : "hover:bg-slate-100/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleMultiModalCoupon(c.id)}
+                                className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300"
+                              />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-xs text-[#41542f] bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {c.code}
+                                  </span>
+                                  <span className="font-bold text-xs text-slate-800">{discountStr}</span>
+                                </div>
+                                {c.min_spend > 0 && (
+                                  <p className="text-[10px] text-slate-500 mt-0.5">Min spend: ₹{c.min_spend}</p>
+                                )}
                               </div>
-                              {c.min_spend > 0 && (
-                                <p className="text-[10px] text-slate-500 mt-0.5">Min spend: ₹{c.min_spend}</p>
-                              )}
                             </div>
-                          </div>
-                          {c.expires_at && (
-                            <span className="text-[10px] text-slate-400">
-                              Exp: {new Date(c.expires_at).toLocaleDateString("en-IN")}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
+                            {c.expires_at && (
+                              <span className="text-[10px] text-slate-400">
+                                Exp: {new Date(c.expires_at).toLocaleDateString("en-IN")}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })
+                  )}
                 </div>
               </div>
 

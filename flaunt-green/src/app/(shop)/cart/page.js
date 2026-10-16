@@ -329,17 +329,23 @@ export default function CartPage() {
                         <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                       </div>
                       {/* Individual Coupon Discounts */}
-                      {couponDiscounts.map((cd) => (
-                        <div key={cd.code} className="flex justify-between text-emerald-700">
-                          <span className="flex items-center gap-1 font-medium">
-                            <Tag className="w-3.5 h-3.5" /> Discount ({cd.code})
+                      {couponDiscounts.map((cd, idx) => (
+                        <div key={cd.code} className="flex justify-between text-emerald-700 text-sm">
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Tag className="w-3.5 h-3.5" /> Coupon #{idx + 1} ({cd.code})
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                              Stacked
+                            </span>
                           </span>
                           <span className="font-bold">-₹{cd.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                         </div>
                       ))}
                       {couponsList.length > 1 && (
-                        <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1">
-                          <span>Total Promo Savings</span>
+                        <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1.5 bg-emerald-50/60 p-2 rounded-xl text-sm">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-emerald-600" />
+                            Total Stacked Promo Savings ({couponsList.length} codes)
+                          </span>
                           <span>-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                         </div>
                       )}
@@ -378,27 +384,99 @@ export default function CartPage() {
 
                   {/* Promo Code Box */}
                   <div className="border border-slate-100 rounded-2xl p-6 bg-white shadow-soft-sm">
+                    {/* Header with Badges */}
                     <h3 className="font-bold text-[#1C2A3A] mb-3 text-base flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Tag className="w-4 h-4 text-[#41542f]" /> Promo Codes
                       </span>
                       {couponsList.length > 0 && (
-                        <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
                           {couponsList.length}/3 Stacked
                         </span>
                       )}
                     </h3>
 
+                    {/* Stackable Promo Banner */}
+                    <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/90 via-emerald-50/60 to-amber-50/40 border border-amber-200/80 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-[#41542f] text-white text-[11px] shadow-xs">
+                            🎟️
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 tracking-tight">
+                            Stack Multiple Coupons
+                          </span>
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-200/60">
+                          <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                          Up to 3 Allowed
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-slate-600 leading-snug">
+                        {couponsList.length === 0 && (
+                          <>Combine welcome offers &amp; promotional discounts together! Enter your first code below, then stack more.</>
+                        )}
+                        {couponsList.length === 1 && (
+                          <span className="text-emerald-700 font-semibold">
+                            🎉 1 coupon applied! Enter another code below to stack extra savings (2 slots remaining).
+                          </span>
+                        )}
+                        {couponsList.length === 2 && (
+                          <span className="text-emerald-700 font-semibold">
+                            🔥 2 coupons stacked! You can add 1 more code to maximize your discount.
+                          </span>
+                        )}
+                        {couponsList.length >= 3 && (
+                          <span className="text-emerald-800 font-semibold">
+                            ⭐ Max 3 coupons stacked! Best possible promo savings unlocked for this order.
+                          </span>
+                        )}
+                      </p>
+
+                      {/* 3 Interactive Slot Badges */}
+                      <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-amber-200/50">
+                        {[0, 1, 2].map((slotIdx) => {
+                          const isFilled = couponsList[slotIdx];
+                          return (
+                            <div
+                              key={slotIdx}
+                              className={`flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-semibold transition-all ${
+                                isFilled
+                                  ? "bg-emerald-600 text-white shadow-xs"
+                                  : couponsList.length === slotIdx
+                                  ? "bg-white text-[#41542f] border border-[#41542f]/40 font-bold shadow-2xs"
+                                  : "bg-white/60 text-slate-400 border border-slate-200/50"
+                              }`}
+                            >
+                              {isFilled ? (
+                                <>
+                                  <Check className="w-3 h-3 shrink-0" />
+                                  <span className="truncate max-w-[50px] font-mono">{isFilled.code}</span>
+                                </>
+                              ) : couponsList.length === slotIdx ? (
+                                <span>Slot {slotIdx + 1} (Enter)</span>
+                              ) : (
+                                <span>Slot {slotIdx + 1}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Applied coupons list */}
                     {couponsList.length > 0 && (
                       <div className="space-y-2 mb-3">
-                        {couponDiscounts.map((cd) => (
+                        {couponDiscounts.map((cd, idx) => (
                           <div
                             key={cd.code}
                             className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between transition-all animate-fade-in"
                           >
                             <div className="flex items-center gap-2">
-                              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold shrink-0">
+                                {idx + 1}
+                              </span>
                               <div>
                                 <span className="font-mono font-bold text-emerald-800 text-sm tracking-wider">{cd.code}</span>
                                 <p className="text-xs text-emerald-700 font-medium">
@@ -424,37 +502,46 @@ export default function CartPage() {
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder={couponsList.length > 0 ? "ADD ANOTHER PROMO CODE" : "ENTER CODE (E.G. WELCOME10)"}
+                            placeholder={
+                              couponsList.length === 0
+                                ? "Enter 1st promo code (e.g. WELCOME10)"
+                                : couponsList.length === 1
+                                ? "Enter 2nd code to stack savings..."
+                                : "Enter 3rd & final code..."
+                            }
                             value={couponCode}
                             onChange={(e) => {
                               setCouponCode(e.target.value.toUpperCase());
                               if (couponError) setCouponError("");
                             }}
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] text-sm uppercase font-mono tracking-wider"
+                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] text-sm uppercase font-mono tracking-wider placeholder:normal-case placeholder:font-sans"
                           />
                           <button
                             type="submit"
                             disabled={couponLoading || !couponCode.trim()}
-                            className="px-5 py-2.5 rounded-xl bg-[#41542f] text-white font-medium hover:bg-[#344325] transition-colors text-sm disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                            className="px-5 py-2.5 rounded-xl bg-[#41542f] text-white font-medium hover:bg-[#344325] transition-colors text-sm disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                           >
                             {couponLoading ? (
                               <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
+                            ) : couponsList.length === 0 ? (
                               "Apply"
+                            ) : (
+                              `+ Stack #${couponsList.length + 1}`
                             )}
                           </button>
                         </div>
                         {couponError && (
                           <p className="text-xs text-red-500 mt-1 font-medium">{couponError}</p>
                         )}
-                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                          ✨ Stack up to 3 coupons for extra savings on Flaunt Green!
+                        <p className="text-[11px] text-slate-500 mt-1 font-medium flex items-center gap-1">
+                          <span>💡 Tip: Apply up to 3 coupons one by one to combine all discounts together!</span>
                         </p>
                       </form>
                     ) : (
                       <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
-                        <p className="text-xs text-emerald-800 font-medium">
-                          🎉 Maximum 3 promo codes stacked for maximum savings!
+                        <p className="text-xs text-emerald-800 font-semibold flex items-center justify-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-emerald-600" />
+                          Maximum 3 promo codes stacked for maximum savings!
                         </p>
                       </div>
                     )}

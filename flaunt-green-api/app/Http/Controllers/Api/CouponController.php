@@ -216,6 +216,27 @@ class CouponController extends Controller
             'custom_message' => 'nullable|string|max:1000',
         ]);
 
+        if (!$coupon->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This promo code is currently inactive and cannot be sent.',
+            ], 422);
+        }
+
+        if ($coupon->expires_at && \Carbon\Carbon::now()->greaterThan($coupon->expires_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This promo code has expired and cannot be sent to customers.',
+            ], 422);
+        }
+
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This promo code has reached its maximum usage limit.',
+            ], 422);
+        }
+
         try {
             Mail::to($validated['customer_email'])->send(
                 new CouponPromoMail(
@@ -253,13 +274,21 @@ class CouponController extends Controller
 
         $coupons = Coupon::whereIn('id', $validated['coupon_ids'])
             ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')
+                  ->orWhereRaw('used_count < usage_limit');
+            })
             ->get();
 
         if ($coupons->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No active coupons found to send.',
-            ], 404);
+                'message' => 'No active or unexpired coupons found to send.',
+            ], 422);
         }
 
         try {
@@ -274,7 +303,7 @@ class CouponController extends Controller
             $count = $coupons->count();
             return response()->json([
                 'success' => true,
-                'message' => "{$count} promo codes sent to {$validated['customer_email']} successfully!",
+                'message' => "{$count} valid promo codes sent to {$validated['customer_email']} successfully!",
             ]);
         } catch (\Exception $e) {
             Log::error("Failed to send multiple coupons email: " . $e->getMessage());

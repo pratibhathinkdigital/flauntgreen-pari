@@ -1432,27 +1432,87 @@ export default function CheckoutClient() {
 
                 {/* Promo Codes (Multiple Coupons Stackable) */}
                 <div className="border-t border-slate-100 pt-4 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-[#41542f]" /> Promo Codes
-                    </span>
-                    {appliedCoupons.length > 0 && (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                        {appliedCoupons.length}/3 Stacked
+                  {/* Stackable Promo Banner */}
+                  <div className="mb-3 p-3 rounded-2xl bg-gradient-to-br from-amber-50/90 via-emerald-50/60 to-amber-50/40 border border-amber-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-[#41542f] text-white text-[11px] shadow-xs">
+                          🎟️
+                        </span>
+                        <span className="text-xs font-bold text-slate-800 tracking-tight">
+                          Stack Multiple Coupons
+                        </span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-200/60">
+                        <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                        Up to 3 Allowed
                       </span>
-                    )}
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 leading-snug">
+                      {appliedCoupons.length === 0 && (
+                        <>You can combine up to 3 coupons together! Enter your first code below, then stack more for extra savings.</>
+                      )}
+                      {appliedCoupons.length === 1 && (
+                        <span className="text-emerald-700 font-semibold">
+                          🎉 1 coupon applied! Enter another code below to stack extra savings (2 slots remaining).
+                        </span>
+                      )}
+                      {appliedCoupons.length === 2 && (
+                        <span className="text-emerald-700 font-semibold">
+                          🔥 2 coupons stacked! You can add 1 more code to maximize your discount.
+                        </span>
+                      )}
+                      {appliedCoupons.length >= 3 && (
+                        <span className="text-emerald-800 font-semibold">
+                          ⭐ Max 3 coupons stacked! Best possible promo savings unlocked for this order.
+                        </span>
+                      )}
+                    </p>
+
+                    {/* 3 Interactive Slot Badges */}
+                    <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-amber-200/50">
+                      {[0, 1, 2].map((slotIdx) => {
+                        const isFilled = appliedCoupons[slotIdx];
+                        return (
+                          <div
+                            key={slotIdx}
+                            className={`flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-semibold transition-all ${
+                              isFilled
+                                ? "bg-emerald-600 text-white shadow-xs"
+                                : appliedCoupons.length === slotIdx
+                                ? "bg-white text-[#41542f] border border-[#41542f]/40 font-bold shadow-2xs"
+                                : "bg-white/60 text-slate-400 border border-slate-200/50"
+                            }`}
+                          >
+                            {isFilled ? (
+                              <>
+                                <Check className="w-3 h-3 shrink-0" />
+                                <span className="truncate max-w-[50px] font-mono">{isFilled.code}</span>
+                              </>
+                            ) : appliedCoupons.length === slotIdx ? (
+                              <span>Slot {slotIdx + 1} (Enter)</span>
+                            ) : (
+                              <span>Slot {slotIdx + 1}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* List of Applied Coupon Chips */}
                   {appliedCoupons.length > 0 && (
                     <div className="space-y-1.5 mb-3">
-                      {couponDiscounts.map((cd) => (
+                      {couponDiscounts.map((cd, idx) => (
                         <div
                           key={cd.code}
                           className="flex items-center justify-between bg-emerald-50 border border-emerald-200/80 px-2.5 py-1.5 rounded-xl text-xs transition-all animate-fade-in shadow-xs"
                         >
                           <div className="flex items-center gap-1.5 text-emerald-800">
-                            <Tag className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span className="w-4 h-4 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-[10px] font-bold">
+                              {idx + 1}
+                            </span>
                             <span className="font-mono font-bold tracking-wide">{cd.code}</span>
                             <span className="text-emerald-700 text-[11px] font-medium">({cd.label})</span>
                             <span className="text-emerald-950 font-bold ml-1">-₹{cd.discount.toLocaleString("en-IN")}</span>
@@ -1476,35 +1536,44 @@ export default function CheckoutClient() {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder={appliedCoupons.length > 0 ? "Add another promo code..." : "Promo code (e.g. WELCOME10)"}
+                          placeholder={
+                            appliedCoupons.length === 0
+                              ? "Enter 1st promo code (e.g. WELCOME10)"
+                              : appliedCoupons.length === 1
+                              ? "Enter 2nd code to stack savings..."
+                              : "Enter 3rd & final code..."
+                          }
                           value={couponInput}
                           onChange={(e) => {
                             setCouponInput(e.target.value);
                             setCouponError("");
                           }}
-                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#997b47] uppercase font-mono placeholder:font-sans"
+                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#997b47] uppercase font-mono placeholder:font-sans placeholder:normal-case"
                         />
                         <button
                           type="submit"
                           disabled={couponLoading || !couponInput.trim()}
-                          className="px-4 py-2 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-colors disabled:opacity-50 flex items-center gap-1 shadow-sm"
+                          className="px-4 py-2 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-colors disabled:opacity-50 flex items-center gap-1 shadow-sm whitespace-nowrap"
                         >
                           {couponLoading ? (
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
+                          ) : appliedCoupons.length === 0 ? (
                             "Apply"
+                          ) : (
+                            `+ Stack #${appliedCoupons.length + 1}`
                           )}
                         </button>
                       </div>
                       {couponError && <p className="text-[11px] text-red-500 font-medium">{couponError}</p>}
-                      <p className="text-[10px] text-slate-500 font-medium">
-                        ✨ You can stack up to 3 coupons per order for maximum savings!
+                      <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <span>💡 Tip: Enter each code one by one to combine discounts.</span>
                       </p>
                     </form>
                   ) : (
-                    <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200 text-center">
-                      <p className="text-[11px] text-emerald-800 font-medium">
-                        🎉 Maximum 3 promo codes stacked for maximum savings!
+                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
+                      <p className="text-[11px] text-emerald-800 font-semibold flex items-center justify-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        Maximum 3 promo codes stacked! Best discount active.
                       </p>
                     </div>
                   )}
@@ -1527,18 +1596,21 @@ export default function CheckoutClient() {
                   </div>
 
                   {/* Individual Coupon Discounts */}
-                  {couponDiscounts.map((cd) => (
+                  {couponDiscounts.map((cd, idx) => (
                     <div key={cd.code} className="flex justify-between text-emerald-700 font-medium">
                       <span className="flex items-center gap-1">
-                        <Tag className="w-3 h-3" /> Coupon ({cd.code})
+                        <Tag className="w-3 h-3" /> Coupon #{idx + 1} ({cd.code})
                       </span>
                       <span>-₹{cd.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   ))}
 
                   {appliedCoupons.length > 1 && (
-                    <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1">
-                      <span>Total Promo Savings</span>
+                    <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1.5 bg-emerald-50/60 p-2 rounded-xl">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        Total Stacked Promo Savings ({appliedCoupons.length} codes)
+                      </span>
                       <span>-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
