@@ -45,3 +45,17 @@ Route::get('/clear-cache', function () {
         return 'Error: ' . $e->getMessage();
     }
 });
+
+// Helper route to test email sending directly from browser
+Route::get('/test-email', function () {
+    try {
+        $to = request('to', config('mail.mailers.smtp.username', 'pratibhathinkdigital@gmail.com'));
+        \Illuminate\Support\Facades\Mail::raw('Test Flaunt Green Mail on Hostinger Server', function ($m) use ($to) {
+            $m->to($to)
+              ->subject('Test SMTP from Hostinger');
+        });
+        return 'Email sent successfully to ' . $to . ' via ' . config('mail.mailers.smtp.host') . ':' . config('mail.mailers.smtp.port') . '!';
+    } catch (\Exception $e) {
+        return 'SMTP Error: ' . $e->getMessage();
+    }
+});
