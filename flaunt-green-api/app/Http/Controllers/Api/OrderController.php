@@ -320,7 +320,10 @@ class OrderController extends Controller
         }
 
         $validated = $request->validate([
-            'reason' => 'nullable|string|max:500',
+            'reason' => 'required|string|min:3|max:500',
+        ], [
+            'reason.required' => 'A cancellation reason is required to cancel this order.',
+            'reason.min'      => 'Cancellation reason must be at least 3 characters.',
         ]);
 
         $order->status = 'cancelled';

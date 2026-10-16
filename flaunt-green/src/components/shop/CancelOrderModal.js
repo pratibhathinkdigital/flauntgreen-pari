@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { ordersApi } from "@/services/api";
 
@@ -15,20 +15,47 @@ const CANCEL_REASONS = [
 ];
 
 export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) {
-  const [reason, setReason] = useState(CANCEL_REASONS[0]);
+  const [reason, setReason] = useState("");
   const [customNote, setCustomNote] = useState("");
+  const [confirmCheck, setConfirmCheck] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setReason("");
+      setCustomNote("");
+      setConfirmCheck(false);
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen || !order) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    const fullReason = reason === "Other reason" && customNote.trim()
+    if (!reason || reason.trim() === "") {
+      setError("Please select a valid cancellation reason from the list.");
+      return;
+    }
+
+    if (reason === "Other reason" && !customNote.trim()) {
+      setError("Please enter a brief note explaining your cancellation reason.");
+      return;
+    }
+
+    if (!confirmCheck) {
+      setError("Please check the confirmation box to authorize order cancellation.");
+      return;
+    }
+
+    setLoading(true);
+
+    const fullReason = reason === "Other reason"
       ? `Other: ${customNote.trim()}`
       : customNote.trim()
       ? `${reason} - ${customNote.trim()}`
@@ -92,7 +119,7 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
+                <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 font-medium">
                   {error}
                 </div>
               )}
@@ -123,27 +150,67 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
                 </label>
                 <select
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs bg-white text-stone-800 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f]"
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  required
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs bg-white text-stone-800 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] transition-all ${
+                    !reason ? "border-amber-300 text-stone-500 font-medium" : "border-stone-200"
+                  }`}
                 >
+                  <option value="" disabled>-- Please select a mandatory cancellation reason --</option>
                   {CANCEL_REASONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r} className="text-stone-800 font-normal">{r}</option>
                   ))}
                 </select>
               </div>
 
               {/* Additional Comments */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1.5">
-                  Additional Notes (Optional)
+                <label className="block text-xs font-semibold text-stone-700 mb-1.5 flex items-center justify-between">
+                  <span>
+                    {reason === "Other reason" ? "Cancellation Explanation" : "Additional Notes (Optional)"}
+                    {reason === "Other reason" && <span className="text-red-500 ml-1 font-bold">*</span>}
+                  </span>
+                  {reason === "Other reason" && (
+                    <span className="text-[10px] text-red-500 font-medium">Mandatory for &apos;Other reason&apos;</span>
+                  )}
                 </label>
                 <textarea
                   value={customNote}
-                  onChange={(e) => setCustomNote(e.target.value)}
-                  placeholder="Provide any additional details..."
+                  onChange={(e) => {
+                    setCustomNote(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder={
+                    reason === "Other reason"
+                      ? "Please explain in detail why you are cancelling this order..."
+                      : "Provide any additional feedback or details..."
+                  }
                   rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs bg-white text-stone-800 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f]"
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs bg-white text-stone-800 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] transition-all ${
+                    reason === "Other reason" && !customNote.trim() ? "border-amber-300" : "border-stone-200"
+                  }`}
                 />
+              </div>
+
+              {/* Confirmation Checkbox */}
+              <div>
+                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50/60 border border-red-200 cursor-pointer transition-all hover:bg-red-50">
+                  <input
+                    type="checkbox"
+                    checked={confirmCheck}
+                    onChange={(e) => {
+                      setConfirmCheck(e.target.checked);
+                      if (error) setError(null);
+                    }}
+                    className="mt-0.5 w-4 h-4 rounded text-red-600 focus:ring-red-500 border-red-300 cursor-pointer accent-red-600"
+                  />
+                  <span className="text-xs text-red-950 leading-snug select-none font-medium">
+                    I confirm that I want to cancel Order <strong>#{order.id}</strong>. I understand that this cancellation is <strong>permanent</strong> and inventory will be released. <span className="text-red-600 font-bold">*</span>
+                  </span>
+                </label>
               </div>
 
               {/* Action Buttons */}
@@ -158,8 +225,8 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-soft-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  disabled={loading || !reason || !confirmCheck || (reason === "Other reason" && !customNote.trim())}
+                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-soft-sm transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
