@@ -13,9 +13,23 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'collection', 'primaryImage', 'variants'])->latest()->get();
+        $query = Product::with(['category', 'collection', 'primaryImage', 'variants']);
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('slug', 'like', "%{$search}%")
+                  ->orWhereHas('variants', function ($vq) use ($search) {
+                      $vq->where('sku', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $products = $query->latest()->get();
         return response()->json($products);
     }
 
@@ -80,6 +94,17 @@ class ProductController extends Controller
         ]);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
+
+        // Auto-generate SKU if not provided
+        if (empty($validated['sku'])) {
+            $cleanName = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 4)) ?: 'PRD';
+            do {
+                $generatedSku = 'FG-' . $cleanName . '-' . strtoupper(Str::random(4));
+            } while (Product::where('sku', $generatedSku)->exists());
+            $validated['sku'] = $generatedSku;
+        } else {
+            $validated['sku'] = strtoupper(trim($validated['sku']));
+        }
 
         DB::beginTransaction();
         try {
@@ -204,6 +229,19 @@ class ProductController extends Controller
 
         if (isset($validated['name']) && $validated['name'] !== $product->name) {
             $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
+        }
+
+        // Auto-generate SKU if currently empty
+        if (isset($validated['sku'])) {
+            if (empty($validated['sku']) && empty($product->sku)) {
+                $cleanName = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name'] ?? $product->name), 0, 4)) ?: 'PRD';
+                do {
+                    $generatedSku = 'FG-' . $cleanName . '-' . strtoupper(Str::random(4));
+                } while (Product::where('sku', $generatedSku)->exists());
+                $validated['sku'] = $generatedSku;
+            } else {
+                $validated['sku'] = strtoupper(trim($validated['sku']));
+            }
         }
 
         DB::beginTransaction();

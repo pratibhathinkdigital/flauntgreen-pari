@@ -70,13 +70,14 @@ export default function AdminProductsPage() {
         ? p.is_featured
         : !p.is_featured;
 
-    const query = search.toLowerCase();
+    const query = search.trim().toLowerCase();
     const matchSearch =
-      !search ||
+      !query ||
       p.name?.toLowerCase().includes(query) ||
       p.slug?.toLowerCase().includes(query) ||
       p.sku?.toLowerCase().includes(query) ||
-      p.fabric?.toLowerCase().includes(query);
+      p.fabric?.toLowerCase().includes(query) ||
+      p.variants?.some((v) => v.sku?.toLowerCase().includes(query));
 
     return matchCat && matchCol && matchStatus && matchFeatured && matchSearch;
   });
@@ -181,7 +182,7 @@ export default function AdminProductsPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name, slug, SKU, fabric..."
+              placeholder="Search by SKU ID, name, slug, fabric..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#997b47] focus:ring-1 focus:ring-[#997b47]"
@@ -256,10 +257,11 @@ export default function AdminProductsPage() {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[780px]">
+          <table className="w-full text-sm min-w-[850px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-xs uppercase tracking-wide text-slate-400">
                 <th className="px-4 py-3 text-left font-semibold">Product</th>
+                <th className="px-4 py-3 text-left font-semibold">Admin SKU ID</th>
                 <th className="px-4 py-3 text-left font-semibold">Category</th>
                 <th className="px-4 py-3 text-left font-semibold">Price</th>
                 <th className="px-4 py-3 text-left font-semibold">Stock</th>
@@ -270,9 +272,9 @@ export default function AdminProductsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">Loading products...</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-400">Loading products...</td></tr>
               ) : paginatedProducts.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">No products found matching filters.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-400">No products found matching filters.</td></tr>
               ) : (
                 paginatedProducts.map((p) => {
                   const totalStock = p.variants?.reduce((sum, v) => sum + v.stock, 0) || 0;
@@ -297,6 +299,16 @@ export default function AdminProductsPage() {
                             <p className="text-[11px] text-text-muted font-mono">{p.slug}</p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.sku ? (
+                          <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 inline-flex items-center gap-1.5 shadow-2xs">
+                            <Tag className="w-3 h-3 text-[#997b47]" />
+                            {p.sku}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-[11px] text-slate-400 italic">Not set</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#f7ece6] text-[#997b47] font-medium">{p.category?.name || 'Uncategorized'}</span>

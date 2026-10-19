@@ -476,10 +476,6 @@ function ProductTabs({ product, slug, reviews, stats, activeTab, onTabChange, on
                   <span className="block text-[11px] font-bold uppercase tracking-wider text-stone-400">Colour</span>
                   <span className="text-sm font-semibold text-[#141b28]">{product.details.colour || "Natural"}</span>
                 </div>
-                <div>
-                  <span className="block text-[11px] font-bold uppercase tracking-wider text-stone-400">SKU</span>
-                  <span className="text-sm font-mono font-medium text-[#141b28]">{product.details.sku}</span>
-                </div>
               </div>
 
               {(product.model?.size || product.model?.text) && (

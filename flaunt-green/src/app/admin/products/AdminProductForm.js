@@ -316,9 +316,49 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
           <section className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Basic Info</h3>
             
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-text-primary">Name</label>
-              <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:border-[#997b47] focus:ring-1 focus:ring-[#997b47] outline-none" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-sm font-semibold text-text-primary">Product Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:border-[#997b47] focus:ring-1 focus:ring-[#997b47] outline-none"
+                  placeholder="e.g. Sage Green Organic Kurti"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+                    <span>Admin SKU ID</span>
+                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-bold uppercase">
+                      Admin Only
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const clean = (formData.name || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "PRD";
+                      const randomSuffix = Math.floor(100 + Math.random() * 900);
+                      setFormData(prev => ({ ...prev, sku: `FG-${clean}-${randomSuffix}` }));
+                      toast.success("Generated unique SKU");
+                    }}
+                    className="text-[11px] text-[#997b47] hover:underline font-semibold"
+                  >
+                    Auto Generate
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value.toUpperCase() }))}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-mono focus:border-[#997b47] focus:ring-1 focus:ring-[#997b47] outline-none uppercase bg-slate-50/50"
+                  placeholder="e.g. FG-KURT-101"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
