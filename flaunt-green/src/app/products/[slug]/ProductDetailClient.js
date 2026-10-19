@@ -15,59 +15,296 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import ProductReviewsSection from "@/components/shop/ProductReviewsSection";
 import { getInventoryForSlug } from "@/data/inventory";
-import { Leaf, Truck, RotateCcw, Star, Plus, Minus, Ruler, Check, Hand, Heart, Sparkles } from "lucide-react";
+import {
+  Leaf,
+  Truck,
+  RotateCcw,
+  Star,
+  Plus,
+  Minus,
+  Ruler,
+  Check,
+  Hand,
+  Heart,
+  Sparkles,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  X,
+} from "lucide-react";
 import { productsApi, reviewsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
 import { formatPrice } from "@/lib/utils";
 
 /* ─── Product Data ─────────────────────────────────────────────────────────── */
 
-/* ─── Thumbnail Gallery (Supports up to 12 images) ─────────────────────────── */
+/* ─── Thumbnail Gallery (Supports up to 12 images, Height-Synchronized) ─────── */
 function ImageGallery({ images = [] }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [galleryHeight, setGalleryHeight] = useState(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
 
-  // Allow up to 12 images with smooth vertical scroll for angles & fabric closeups
-  const displayImages = (images || []).slice(0, 12);
+  const mainImageRef = useRef(null);
+  const thumbnailListRef = useRef(null);
+
+  const displayImages = (images || []).filter(Boolean).slice(0, 12);
   const safeIdx = activeIdx < displayImages.length ? activeIdx : 0;
 
+  // Dynamically sync thumbnails height to main image height so it NEVER extends below it
+  useEffect(() => {
+    if (!mainImageRef.current) return;
+    const updateHeight = () => {
+      if (mainImageRef.current) {
+        setGalleryHeight(mainImageRef.current.offsetHeight);
+      }
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(mainImageRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Check scroll boundary of thumbnail list
+  const checkScroll = useCallback(() => {
+    const el = thumbnailListRef.current;
+    if (!el) return;
+    setCanScrollUp(el.scrollTop > 5);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+  }, [galleryHeight, displayImages.length, checkScroll]);
+
+  // Scroll active thumbnail into visible range
+  useEffect(() => {
+    if (!thumbnailListRef.current) return;
+    const activeThumb = thumbnailListRef.current.children[safeIdx];
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }
+  }, [safeIdx]);
+
+  const scrollThumbnails = (direction) => {
+    if (!thumbnailListRef.current) return;
+    const amount = direction === "up" ? -180 : 180;
+    thumbnailListRef.current.scrollBy({ top: amount, behavior: "smooth" });
+    setTimeout(checkScroll, 200);
+  };
+
+  const handlePrev = (e) => {
+    e?.stopPropagation?.();
+    setActiveIdx((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1));
+  };
+
+  const handleNext = (e) => {
+    e?.stopPropagation?.();
+    setActiveIdx((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0));
+  };
+
+  if (!displayImages.length) {
+    return (
+      <div
+        className="w-full bg-stone-100 rounded-2xl flex items-center justify-center text-stone-400 font-medium"
+        style={{ aspectRatio: "3 / 4" }}
+      >
+        No image available
+      </div>
+    );
+  }
+
   return (
-    <div className="flex gap-3 items-start">
-      {displayImages.length > 1 && (
-        <div className="flex flex-col gap-2 shrink-0 max-h-[540px] overflow-y-auto pr-0.5">
-          {displayImages.map((img, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setActiveIdx(i)}
-              className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-sm ${
-                safeIdx === i
-                  ? "ring-2 ring-[#B08D3F] ring-offset-1"
-                  : "ring-1 ring-gray-200 hover:ring-gray-400 opacity-80 hover:opacity-100"
-              }`}
-              style={{ width: "80px", height: "100px" }}
+    <>
+      <div className="flex flex-col-reverse md:flex-row gap-3.5 items-start w-full">
+        {/* ── Thumbnails Strip (Up to 12 images, strictly height-locked) ── */}
+        {displayImages.length > 1 && (
+          <div className="relative shrink-0 w-full md:w-[82px] flex md:flex-col items-center">
+            {/* Scroll Up Button (Desktop) */}
+            {canScrollUp && (
+              <button
+                type="button"
+                onClick={() => scrollThumbnails("up")}
+                aria-label="Scroll thumbnails up"
+                className="hidden md:flex absolute -top-3 z-10 w-6 h-6 rounded-full bg-white/95 shadow-md border border-stone-200 items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Thumbnail items */}
+            <div
+              ref={thumbnailListRef}
+              onScroll={checkScroll}
+              className="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto no-scrollbar w-full py-1"
+              style={{
+                maxHeight: galleryHeight ? `${galleryHeight}px` : undefined,
+              }}
             >
-              <Image src={img} alt={`View ${i + 1}`} fill className="object-cover" sizes="80px" />
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="relative flex-1 overflow-hidden bg-gray-100 rounded-sm" style={{ aspectRatio: "4/5" }}>
-        {displayImages[safeIdx] ? (
-          <Image
-            src={displayImages[safeIdx]}
-            alt="Product"
-            fill
-            className="object-cover transition-opacity duration-300"
-            sizes="(max-width: 768px) 100vw, 45vw"
-            priority
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            No image available
+              {displayImages.map((img, i) => {
+                const isSelected = safeIdx === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveIdx(i)}
+                    aria-label={`View photo ${i + 1}`}
+                    className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-xl group cursor-pointer ${
+                      isSelected
+                        ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
+                        : "ring-1 ring-stone-200/80 hover:ring-stone-400 opacity-75 hover:opacity-100"
+                    }`}
+                    style={{
+                      width: "80px",
+                      aspectRatio: "3 / 4",
+                    }}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Product view ${i + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="80px"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Scroll Down Button (Desktop) */}
+            {canScrollDown && (
+              <button
+                type="button"
+                onClick={() => scrollThumbnails("down")}
+                aria-label="Scroll thumbnails down"
+                className="hidden md:flex absolute -bottom-3 z-10 w-6 h-6 rounded-full bg-white/95 shadow-md border border-stone-200 items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
+
+        {/* ── Main Large Product Image ── */}
+        <div
+          ref={mainImageRef}
+          className="relative flex-1 w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 group shadow-soft-sm"
+          style={{ aspectRatio: "3 / 4" }}
+        >
+          <Image
+            src={displayImages[safeIdx]}
+            alt="Main product visual"
+            fill
+            className="object-cover transition-all duration-500 ease-out"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 58vw, 750px"
+            priority
+          />
+
+          {/* Navigation Arrows on Main Image (when multiple images) */}
+          {displayImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous image"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {/* Counter pill */}
+          {displayImages.length > 1 && (
+            <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold tracking-wider shadow-sm pointer-events-none">
+              {safeIdx + 1} / {displayImages.length}
+            </div>
+          )}
+
+          {/* Fullscreen Expand / Lightbox Trigger */}
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="Enlarge image"
+            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 shadow-sm backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 cursor-pointer z-10"
+            title="Click to view full screen"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* ── Fullscreen Lightbox Modal ── */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {displayImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative w-full h-full" style={{ maxHeight: "85vh" }}>
+              <Image
+                src={displayImages[safeIdx]}
+                alt="Enlarged product view"
+                fill
+                className="object-contain"
+                sizes="90vw"
+                priority
+              />
+            </div>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium tracking-wider">
+              {safeIdx + 1} / {displayImages.length}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -938,12 +1175,12 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
 
       {/* ── Product Hero ── */}
       <section className="mx-auto px-4 md:px-8 pb-14" style={{ maxWidth: "1280px" }}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+          <div className="lg:col-span-7">
             <ImageGallery images={product.images} />
           </div>
 
-          <div className="lg:col-span-3 flex flex-col gap-5">
+          <div className="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-24">
             <p className="text-sm" style={{ color: "#B08D3F" }}>
               Collection <span className="mx-1">&bull;</span> {product.collection}
             </p>
