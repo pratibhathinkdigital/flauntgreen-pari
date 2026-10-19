@@ -40,61 +40,16 @@ import { formatPrice } from "@/lib/utils";
 
 /* ─── Product Data ─────────────────────────────────────────────────────────── */
 
-/* ─── Thumbnail Gallery (Supports up to 12 images, Height-Synchronized) ─────── */
+/* ─── Thumbnail Gallery (Max 5 images, 100% Synchronized Equal Height) ─────── */
 function ImageGallery({ images = [] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [galleryHeight, setGalleryHeight] = useState(null);
-  const [canScrollUp, setCanScrollUp] = useState(false);
-  const [canScrollDown, setCanScrollDown] = useState(false);
 
   const mainImageRef = useRef(null);
-  const thumbnailListRef = useRef(null);
 
-  const displayImages = (images || []).filter(Boolean).slice(0, 12);
+  // Maximum 5 images strictly to fit exactly with main visual height
+  const displayImages = (images || []).filter(Boolean).slice(0, 5);
   const safeIdx = activeIdx < displayImages.length ? activeIdx : 0;
-
-  // Dynamically sync thumbnails height to main image height so it NEVER extends below it
-  useEffect(() => {
-    if (!mainImageRef.current) return;
-    const updateHeight = () => {
-      if (mainImageRef.current) {
-        setGalleryHeight(mainImageRef.current.offsetHeight);
-      }
-    };
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(mainImageRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Check scroll boundary of thumbnail list
-  const checkScroll = useCallback(() => {
-    const el = thumbnailListRef.current;
-    if (!el) return;
-    setCanScrollUp(el.scrollTop > 5);
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
-  }, []);
-
-  useEffect(() => {
-    checkScroll();
-  }, [galleryHeight, displayImages.length, checkScroll]);
-
-  // Scroll active thumbnail into visible range
-  useEffect(() => {
-    if (!thumbnailListRef.current) return;
-    const activeThumb = thumbnailListRef.current.children[safeIdx];
-    if (activeThumb) {
-      activeThumb.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    }
-  }, [safeIdx]);
-
-  const scrollThumbnails = (direction) => {
-    if (!thumbnailListRef.current) return;
-    const amount = direction === "up" ? -180 : 180;
-    thumbnailListRef.current.scrollBy({ top: amount, behavior: "smooth" });
-    setTimeout(checkScroll, 200);
-  };
 
   const handlePrev = (e) => {
     e?.stopPropagation?.();
@@ -117,76 +72,47 @@ function ImageGallery({ images = [] }) {
     );
   }
 
+  const thumbGap = 8;
+  const count = displayImages.length;
+
   return (
     <>
       <div className="w-full">
-        {/* ── Desktop Layout: CSS Grid with Left Thumbnails & Right Main Visual ── */}
-        <div className="hidden md:grid md:grid-cols-[74px_1fr] md:gap-3.5 items-stretch w-full">
-          {/* Left Column: Strictly height-bound to main image row via CSS Grid */}
-          {displayImages.length > 1 && (
-            <div className="relative w-[74px] h-full min-h-0 flex flex-col">
-              {/* Scroll Up Button */}
-              {canScrollUp && (
-                <button
-                  type="button"
-                  onClick={() => scrollThumbnails("up")}
-                  aria-label="Scroll thumbnails up"
-                  className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-6 h-6 rounded-full bg-white shadow-md border border-stone-200 flex items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
-                >
-                  <ChevronUp className="w-3.5 h-3.5" />
-                </button>
-              )}
-
-              {/* Scrollable list pinned to top and bottom */}
-              <div
-                ref={thumbnailListRef}
-                onScroll={checkScroll}
-                className="absolute inset-0 flex flex-col gap-2 overflow-y-auto no-scrollbar py-0.5"
-              >
-                {displayImages.map((img, i) => {
-                  const isSelected = safeIdx === i;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActiveIdx(i)}
-                      aria-label={`View photo ${i + 1}`}
-                      className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-xl group cursor-pointer ${
-                        isSelected
-                          ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
-                          : "ring-1 ring-stone-200/80 hover:ring-stone-400 opacity-75 hover:opacity-100"
-                      }`}
-                      style={{
-                        width: "74px",
-                        aspectRatio: "3 / 4",
-                      }}
-                    >
-                      <Image
-                        src={img}
-                        alt={`Product view ${i + 1}`}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="74px"
-                      />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Scroll Down Button */}
-              {canScrollDown && (
-                <button
-                  type="button"
-                  onClick={() => scrollThumbnails("down")}
-                  aria-label="Scroll thumbnails down"
-                  className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 w-6 h-6 rounded-full bg-white shadow-md border border-stone-200 flex items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              )}
+        {/* ── Desktop Layout: 100% Equal Height Synchronized ── */}
+        <div className="hidden md:grid md:grid-cols-[78px_1fr] md:gap-3.5 items-stretch w-full">
+          {/* Left Column: Exactly equal height to main image, flush top to bottom */}
+          {count > 1 && (
+            <div className="w-[78px] h-full flex flex-col justify-between py-0 select-none">
+              {displayImages.map((img, i) => {
+                const isSelected = safeIdx === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveIdx(i)}
+                    aria-label={`View photo ${i + 1}`}
+                    className={`relative w-full rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer ${
+                      isSelected
+                        ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
+                        : "ring-1 ring-stone-200/90 hover:ring-stone-400 opacity-75 hover:opacity-100"
+                    }`}
+                    style={{
+                      height: `calc((100% - ${(count - 1) * thumbGap}px) / ${count})`,
+                    }}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Product view ${i + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="78px"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -194,7 +120,7 @@ function ImageGallery({ images = [] }) {
           <div
             ref={mainImageRef}
             className={`relative w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 group shadow-soft-sm ${
-              displayImages.length <= 1 ? "md:col-span-2" : ""
+              count <= 1 ? "md:col-span-2" : ""
             }`}
             style={{ aspectRatio: "3 / 4" }}
           >
@@ -208,7 +134,7 @@ function ImageGallery({ images = [] }) {
             />
 
             {/* Navigation Arrows on Main Image (when multiple images) */}
-            {displayImages.length > 1 && (
+            {count > 1 && (
               <>
                 <button
                   type="button"
@@ -230,9 +156,9 @@ function ImageGallery({ images = [] }) {
             )}
 
             {/* Counter pill */}
-            {displayImages.length > 1 && (
+            {count > 1 && (
               <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold tracking-wider shadow-sm pointer-events-none">
-                {safeIdx + 1} / {displayImages.length}
+                {safeIdx + 1} / {count}
               </div>
             )}
 
@@ -263,7 +189,7 @@ function ImageGallery({ images = [] }) {
               sizes="100vw"
               priority
             />
-            {displayImages.length > 1 && (
+            {count > 1 && (
               <>
                 <button
                   type="button"
@@ -282,13 +208,13 @@ function ImageGallery({ images = [] }) {
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <div className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold">
-                  {safeIdx + 1} / {displayImages.length}
+                  {safeIdx + 1} / {count}
                 </div>
               </>
             )}
           </div>
 
-          {displayImages.length > 1 && (
+          {count > 1 && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
               {displayImages.map((img, i) => (
                 <button

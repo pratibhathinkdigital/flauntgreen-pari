@@ -91,6 +91,8 @@ class ProductController extends Controller
             'variants.*.image' => 'nullable',
             'variants.*.stock' => 'required|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'file|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
@@ -124,9 +126,9 @@ class ProductController extends Controller
 
             $product = Product::create($validated);
 
-            // Handle images (allow up to 12 product gallery images)
+            // Handle images (allow up to 5 product gallery images for equal height frontend layout)
             if ($request->hasFile('images')) {
-                $imageFiles = array_slice($request->file('images'), 0, 12);
+                $imageFiles = array_slice($request->file('images'), 0, 5);
                 foreach ($imageFiles as $index => $file) {
                     $path = $file->store('products', 'public');
                     ProductImage::create([
@@ -293,10 +295,10 @@ class ProductController extends Controller
                 }
             }
 
-            // Handle new images (uploaded files) with 12 total images limit
+            // Handle new images (uploaded files) with 5 total images limit
             if ($request->hasFile('images')) {
                 $currentCount = $product->images()->count();
-                $allowedCount = max(0, 12 - $currentCount);
+                $allowedCount = max(0, 5 - $currentCount);
                 if ($allowedCount > 0) {
                     $imageFiles = array_slice($request->file('images'), 0, $allowedCount);
                     $maxSortOrder = $product->images()->max('sort_order') ?? -1;

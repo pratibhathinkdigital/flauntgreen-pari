@@ -191,16 +191,17 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
   const handleImageChange = (e) => {
     if (!e.target.files) return;
     const selectedFiles = Array.from(e.target.files);
-    const availableSlots = 12 - (existingImages.length + images.length);
+    const MAX_GALLERY_IMAGES = 5;
+    const availableSlots = MAX_GALLERY_IMAGES - (existingImages.length + images.length);
 
     if (availableSlots <= 0) {
-      toast.error("Maximum 12 product gallery images allowed. Please delete an image first.");
+      toast.error("Maximum 5 product gallery images allowed. Please delete an image first.");
       e.target.value = "";
       return;
     }
 
     if (selectedFiles.length > availableSlots) {
-      toast.error(`Only ${availableSlots} more image(s) can be added (Maximum 12 limit).`);
+      toast.error(`Only ${availableSlots} more image(s) can be added (Maximum 5 limit).`);
       setImages([...images, ...selectedFiles.slice(0, availableSlots)]);
     } else {
       setImages([...images, ...selectedFiles]);
@@ -232,8 +233,8 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
       return;
     }
 
-    if (existingImages.length + images.length > 12) {
-      toast.error("A product can have a maximum of 12 images.");
+    if (existingImages.length + images.length > 5) {
+      toast.error("A product can have a maximum of 5 images.");
       return;
     }
 
@@ -1067,7 +1068,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
             </div>
           </section>
 
-          {/* 3. Product Gallery Card (Up to 12 Photos) */}
+          {/* 3. Product Gallery Card (Strictly 5 Photos for Equal Height) */}
           <section className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-stone-100">
               <div>
@@ -1075,19 +1076,41 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                   <span>Product Gallery</span>
                 </h3>
                 <p className="text-[11px] text-stone-500 mt-0.5">
-                  Front, back, model styling &amp; fabric close-ups
+                  1 Cover + 4 Detail angles (Front, Back, Side, Model, Fabric)
                 </p>
               </div>
 
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
-                  totalPhotosCount >= 12
+                  totalPhotosCount >= 5
                     ? "bg-amber-100 text-amber-800 border border-amber-300"
                     : "bg-[#41542f]/10 text-[#41542f] border border-[#41542f]/20"
                 }`}
               >
-                {totalPhotosCount} / 12
+                {totalPhotosCount} / 5
               </span>
+            </div>
+
+            {/* Prominent Mandatory Image Specs Guideline Box */}
+            <div className="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2 text-xs text-stone-700">
+              <div className="flex items-center justify-between font-bold text-amber-900">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#997b47]" />
+                  Recommended Image Specifications:
+                </span>
+                <span className="bg-[#997b47] text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold">
+                  3:4 Portrait
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-stone-600">
+                <div>• <strong>Dimensions:</strong> 1200 × 1600 px</div>
+                <div>• <strong>Max Allowed:</strong> Exactly 5 Photos</div>
+                <div>• <strong>Aspect Ratio:</strong> 3:4 Vertical Fashion</div>
+                <div>• <strong>Max File Size:</strong> 5 MB (JPG/PNG/WebP)</div>
+              </div>
+              <p className="text-[10px] text-amber-800 pt-1.5 border-t border-amber-200/60 leading-normal">
+                💡 <strong>Frontend Alignment:</strong> Exactly 5 photos fit alongside the main product visual on the website with <strong>100% equal top-to-bottom height</strong> without any gaps or overflow.
+              </p>
             </div>
 
             {/* Hidden File Input */}
@@ -1101,27 +1124,27 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
             />
 
             {/* Clean Dropzone Upload Button */}
-            {totalPhotosCount < 12 ? (
+            {totalPhotosCount < 5 ? (
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="w-full py-6 border-2 border-dashed border-stone-300 hover:border-[#41542f] rounded-2xl flex flex-col items-center justify-center gap-2 text-stone-500 hover:text-[#41542f] hover:bg-emerald-50/30 transition-all cursor-pointer group"
+                className="w-full py-5 border-2 border-dashed border-stone-300 hover:border-[#41542f] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-stone-500 hover:text-[#41542f] hover:bg-emerald-50/30 transition-all cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-stone-100 group-hover:bg-emerald-100/70 text-stone-500 group-hover:text-[#41542f] flex items-center justify-center transition-colors shadow-2xs">
-                  <Upload className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-stone-100 group-hover:bg-emerald-100/70 text-stone-500 group-hover:text-[#41542f] flex items-center justify-center transition-colors shadow-2xs">
+                  <Upload className="w-4 h-4" />
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-bold text-stone-800 group-hover:text-[#41542f]">
                     Upload Product Images
                   </p>
                   <p className="text-[10px] text-stone-400 mt-0.5">
-                    Click to browse • {12 - totalPhotosCount} slots remaining
+                    Click to browse • {5 - totalPhotosCount} slots remaining (Max 5)
                   </p>
                 </div>
               </button>
             ) : (
               <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium text-center">
-                Maximum 12 photos reached. Remove an image to upload a new one.
+                Maximum 5 photos reached. Remove an image to upload a new one.
               </div>
             )}
 
