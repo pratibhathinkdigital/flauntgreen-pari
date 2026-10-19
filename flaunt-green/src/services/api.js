@@ -68,6 +68,7 @@ export const userApi = {
 // ── Orders ────────────────────────────────────────────────────────────────────
 
 export const ordersApi = {
+  checkFirstOrderEligibility: () => api.get("/orders/first-order-eligibility"),
   getMyOrders: (params)   => api.get("/orders/my-orders", { params }),
   getOne:      (id)        => api.get(`/orders/${id}`),
   create:      (data)      => api.post("/orders", data),

@@ -81,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
 
     // User Orders
+    Route::get('/orders/first-order-eligibility', [OrderController::class, 'checkFirstOrderEligibility']);
     Route::get('/orders/my-orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);

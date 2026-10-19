@@ -15,7 +15,7 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import ProductReviewsSection from "@/components/shop/ProductReviewsSection";
 import { getInventoryForSlug } from "@/data/inventory";
-import { Leaf, Truck, RotateCcw, Star, Plus, Minus, Ruler, Check, Hand, Heart } from "lucide-react";
+import { Leaf, Truck, RotateCcw, Star, Plus, Minus, Ruler, Check, Hand, Heart, Sparkles } from "lucide-react";
 import { productsApi, reviewsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
 import { formatPrice } from "@/lib/utils";
@@ -964,7 +964,13 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
 
             {/* Price */}
             <div>
-              <p className="font-bold" style={{ fontSize: "28px", color: "#1a1a1a" }}>{formatPrice(product.price)}</p>
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <p className="font-bold" style={{ fontSize: "28px", color: "#1a1a1a" }}>{formatPrice(product.price)}</p>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 inline-flex items-center gap-1 shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  First Order: 5% OFF at checkout
+                </span>
+              </div>
               <p className="text-xs mt-0.5" style={{ color: "#888" }}>Inclusive of all Taxes.</p>
             </div>
 

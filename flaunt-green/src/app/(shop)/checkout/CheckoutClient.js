@@ -135,6 +135,7 @@ export default function CheckoutClient() {
   const [appliedCoupons, setAppliedCoupons] = useState([]);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [isFirstOrder, setIsFirstOrder] = useState(Boolean(user?.is_first_order));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
   const [errors, setErrors] = useState({});
@@ -190,6 +191,20 @@ export default function CheckoutClient() {
         lastName: auth.user.name ? auth.user.name.split(" ").slice(1).join(" ") : prev.lastName
       }));
     }
+
+    // Check first order discount eligibility with server
+    ordersApi.checkFirstOrderEligibility()
+      .then((res) => {
+        if (typeof res.data?.eligible === "boolean") {
+          setIsFirstOrder(res.data.eligible);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not check first order eligibility:", err);
+        if (auth.user?.is_first_order !== undefined) {
+          setIsFirstOrder(Boolean(auth.user.is_first_order));
+        }
+      });
 
     // Load saved addresses ONCE for logged-in user
     const fetchSavedAddresses = async () => {
@@ -248,10 +263,11 @@ export default function CheckoutClient() {
     };
   });
 
-  const totalDiscount = Math.min(
-    couponDiscounts.reduce((sum, c) => sum + c.discount, 0),
-    subtotal
-  );
+  const couponTotal = couponDiscounts.reduce((sum, c) => sum + c.discount, 0);
+
+  // ── First Order 5% Discount Calculation ──────────────────────────
+  const firstOrderDiscount = isFirstOrder ? Math.round(subtotal * 0.05) : 0;
+  const totalDiscount = Math.min(couponTotal + firstOrderDiscount, subtotal);
   const discountAmount = totalDiscount;
   const totalAmount = Math.max(0, subtotal + shippingFee - totalDiscount);
 
@@ -428,7 +444,7 @@ export default function CheckoutClient() {
           payload: {
             customer: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, phone: formData.phone },
             shipping_address: { first_name: formData.firstName, last_name: formData.lastName, address_line_1: formData.addressLine1, address_line_2: formData.addressLine2, city: formData.city, state: formData.state, pincode: formData.pincode },
-            subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
+            subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, first_order_discount: firstOrderDiscount, coupon_discount: couponTotal, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
           },
           items: [...items],
           total: totalAmount,
@@ -519,7 +535,7 @@ export default function CheckoutClient() {
                     payload: {
                       customer: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, phone: formData.phone },
                       shipping_address: { first_name: formData.firstName, last_name: formData.lastName, address_line_1: formData.addressLine1, address_line_2: formData.addressLine2, city: formData.city, state: formData.state, pincode: formData.pincode },
-                      subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
+                      subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, first_order_discount: firstOrderDiscount, coupon_discount: couponTotal, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
                     },
                     items: [...items],
                     total: totalAmount,
@@ -689,9 +705,23 @@ export default function CheckoutClient() {
                     <span>Shipping</span>
                     <span>{orderConfirmed.payload.shipping_fee === 0 ? "Free" : `₹${orderConfirmed.payload.shipping_fee}`}</span>
                   </div>
-                  {orderConfirmed.payload.discount_amount > 0 && (
+                  {orderConfirmed.payload.first_order_discount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/80 p-2 rounded-lg border border-emerald-200/80">
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> First Order Discount (5%)
+                      </span>
+                      <span className="font-bold">-₹{orderConfirmed.payload.first_order_discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                  {orderConfirmed.payload.coupon_discount > 0 && (
                     <div className="flex justify-between text-[#41542f] font-medium">
-                      <span>Discount ({orderConfirmed.payload.coupon_code})</span>
+                      <span>Coupons ({orderConfirmed.payload.coupon_code})</span>
+                      <span>-₹{orderConfirmed.payload.coupon_discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                  {(!orderConfirmed.payload.first_order_discount && !orderConfirmed.payload.coupon_discount && orderConfirmed.payload.discount_amount > 0) && (
+                    <div className="flex justify-between text-[#41542f] font-medium">
+                      <span>Discount ({orderConfirmed.payload.coupon_code || "Applied"})</span>
                       <span>-₹{orderConfirmed.payload.discount_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
@@ -1608,6 +1638,22 @@ export default function CheckoutClient() {
                     </span>
                   </div>
 
+                  {/* First Order 5% Discount Callout */}
+                  {isFirstOrder && firstOrderDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-800 font-medium bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
+                      <span className="flex items-center gap-1.5 font-semibold text-emerald-950">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        First Order Discount (5%)
+                        <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded font-bold uppercase">
+                          Welcome
+                        </span>
+                      </span>
+                      <span className="font-bold text-emerald-800">
+                        -₹{firstOrderDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Individual Coupon Discounts */}
                   {couponDiscounts.map((cd, idx) => (
                     <div key={cd.code} className="flex justify-between text-emerald-700 font-medium">
@@ -1624,7 +1670,7 @@ export default function CheckoutClient() {
                         <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                         Total Stacked Promo Savings ({appliedCoupons.length} codes)
                       </span>
-                      <span>-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      <span>-₹{couponTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
 

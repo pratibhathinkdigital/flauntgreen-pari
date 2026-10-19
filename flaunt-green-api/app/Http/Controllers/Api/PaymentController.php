@@ -100,16 +100,21 @@ class PaymentController extends Controller
             }
         }
 
-        // Discount cannot exceed subtotal
-        $discountAmount = min($discountAmount, $serverSubtotal);
+        // ── First Order 5% Discount Calculation ──────────────────────────────
+        $user = auth()->user();
+        $isFirstOrder = $user ? (bool)$user->is_first_order : false;
+        $firstOrderDiscount = $isFirstOrder ? (float)round($serverSubtotal * 0.05) : 0;
+
+        // Total discount: Coupon discount + First order 5% discount (capped at subtotal)
+        $totalDiscount = min($serverSubtotal, $discountAmount + $firstOrderDiscount);
 
         $shippingCost = (float)($validated['shipping_cost'] ?? 0);
-        $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $discountAmount);
+        $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $totalDiscount);
 
         // Strict price verification: Tolerance ₹2 (for rounding only, not ₹500)
         $clientAmount = (float) $validated['amount'];
         if (abs($clientAmount - $serverCalculatedTotal) > 2) {
-            Log::error("PaymentController: Price mismatch. Client: {$clientAmount}, Server: {$serverCalculatedTotal} (Subtotal: {$serverSubtotal}, Disc: {$discountAmount}, Ship: {$shippingCost})");
+            Log::error("PaymentController: Price mismatch. Client: {$clientAmount}, Server: {$serverCalculatedTotal} (Subtotal: {$serverSubtotal}, TotalDisc: {$totalDiscount}, FirstOrderDisc: {$firstOrderDiscount}, CouponDisc: {$discountAmount}, Ship: {$shippingCost})");
             return response()->json(['error' => 'Price mismatch. Please refresh your cart and try again.'], 422);
         }
 
@@ -136,7 +141,14 @@ class PaymentController extends Controller
             ? implode(', ', array_map(fn($c) => $c->code, $validCoupons))
             : null;
 
-        $orderNotes = $appliedCodesList ? "Coupons: [{$appliedCodesList}]" : null;
+        $notesParts = [];
+        if ($isFirstOrder && $firstOrderDiscount > 0) {
+            $notesParts[] = "First Order Discount (5%): -₹{$firstOrderDiscount}";
+        }
+        if ($appliedCodesList) {
+            $notesParts[] = "Coupons: [{$appliedCodesList}]";
+        }
+        $orderNotes = !empty($notesParts) ? implode(' | ', $notesParts) : null;
 
         DB::beginTransaction();
         try {
