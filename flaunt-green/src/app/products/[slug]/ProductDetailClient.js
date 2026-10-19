@@ -119,132 +119,194 @@ function ImageGallery({ images = [] }) {
 
   return (
     <>
-      <div className="flex flex-col-reverse md:flex-row gap-3.5 items-start w-full">
-        {/* ── Thumbnails Strip (Up to 12 images, strictly height-locked) ── */}
-        {displayImages.length > 1 && (
-          <div className="relative shrink-0 w-full md:w-[82px] flex md:flex-col items-center">
-            {/* Scroll Up Button (Desktop) */}
-            {canScrollUp && (
-              <button
-                type="button"
-                onClick={() => scrollThumbnails("up")}
-                aria-label="Scroll thumbnails up"
-                className="hidden md:flex absolute -top-3 z-10 w-6 h-6 rounded-full bg-white/95 shadow-md border border-stone-200 items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
+      <div className="w-full">
+        {/* ── Desktop Layout: CSS Grid with Left Thumbnails & Right Main Visual ── */}
+        <div className="hidden md:grid md:grid-cols-[74px_1fr] md:gap-3.5 items-stretch w-full">
+          {/* Left Column: Strictly height-bound to main image row via CSS Grid */}
+          {displayImages.length > 1 && (
+            <div className="relative w-[74px] h-full min-h-0 flex flex-col">
+              {/* Scroll Up Button */}
+              {canScrollUp && (
+                <button
+                  type="button"
+                  onClick={() => scrollThumbnails("up")}
+                  aria-label="Scroll thumbnails up"
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-6 h-6 rounded-full bg-white shadow-md border border-stone-200 flex items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Scrollable list pinned to top and bottom */}
+              <div
+                ref={thumbnailListRef}
+                onScroll={checkScroll}
+                className="absolute inset-0 flex flex-col gap-2 overflow-y-auto no-scrollbar py-0.5"
               >
-                <ChevronUp className="w-3.5 h-3.5" />
-              </button>
+                {displayImages.map((img, i) => {
+                  const isSelected = safeIdx === i;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActiveIdx(i)}
+                      aria-label={`View photo ${i + 1}`}
+                      className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-xl group cursor-pointer ${
+                        isSelected
+                          ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
+                          : "ring-1 ring-stone-200/80 hover:ring-stone-400 opacity-75 hover:opacity-100"
+                      }`}
+                      style={{
+                        width: "74px",
+                        aspectRatio: "3 / 4",
+                      }}
+                    >
+                      <Image
+                        src={img}
+                        alt={`Product view ${i + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="74px"
+                      />
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Scroll Down Button */}
+              {canScrollDown && (
+                <button
+                  type="button"
+                  onClick={() => scrollThumbnails("down")}
+                  aria-label="Scroll thumbnails down"
+                  className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 w-6 h-6 rounded-full bg-white shadow-md border border-stone-200 flex items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Right Column: Main Image */}
+          <div
+            ref={mainImageRef}
+            className={`relative w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 group shadow-soft-sm ${
+              displayImages.length <= 1 ? "md:col-span-2" : ""
+            }`}
+            style={{ aspectRatio: "3 / 4" }}
+          >
+            <Image
+              src={displayImages[safeIdx]}
+              alt="Main product visual"
+              fill
+              className="object-cover transition-all duration-500 ease-out"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 58vw, 750px"
+              priority
+            />
+
+            {/* Navigation Arrows on Main Image (when multiple images) */}
+            {displayImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
             )}
 
-            {/* Thumbnail items */}
-            <div
-              ref={thumbnailListRef}
-              onScroll={checkScroll}
-              className="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto no-scrollbar w-full py-1"
-              style={{
-                maxHeight: galleryHeight ? `${galleryHeight}px` : undefined,
-              }}
-            >
-              {displayImages.map((img, i) => {
-                const isSelected = safeIdx === i;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setActiveIdx(i)}
-                    aria-label={`View photo ${i + 1}`}
-                    className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-xl group cursor-pointer ${
-                      isSelected
-                        ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
-                        : "ring-1 ring-stone-200/80 hover:ring-stone-400 opacity-75 hover:opacity-100"
-                    }`}
-                    style={{
-                      width: "80px",
-                      aspectRatio: "3 / 4",
-                    }}
-                  >
-                    <Image
-                      src={img}
-                      alt={`Product view ${i + 1}`}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="80px"
-                    />
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Counter pill */}
+            {displayImages.length > 1 && (
+              <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold tracking-wider shadow-sm pointer-events-none">
+                {safeIdx + 1} / {displayImages.length}
+              </div>
+            )}
 
-            {/* Scroll Down Button (Desktop) */}
-            {canScrollDown && (
-              <button
-                type="button"
-                onClick={() => scrollThumbnails("down")}
-                aria-label="Scroll thumbnails down"
-                className="hidden md:flex absolute -bottom-3 z-10 w-6 h-6 rounded-full bg-white/95 shadow-md border border-stone-200 items-center justify-center text-stone-600 hover:text-stone-900 transition-all hover:scale-110 cursor-pointer"
-              >
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
+            {/* Fullscreen Expand / Lightbox Trigger */}
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              aria-label="Enlarge image"
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 shadow-sm backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 cursor-pointer z-10"
+              title="Click to view full screen"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Mobile Layout (< md): Main Image on Top, Horizontal Thumbnails Below ── */}
+        <div className="md:hidden flex flex-col gap-3 w-full">
+          <div
+            className="relative w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 shadow-soft-sm"
+            style={{ aspectRatio: "3 / 4" }}
+          >
+            <Image
+              src={displayImages[safeIdx]}
+              alt="Main product visual"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            {displayImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-stone-800 shadow-sm flex items-center justify-center z-10 cursor-pointer"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-stone-800 shadow-sm flex items-center justify-center z-10 cursor-pointer"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold">
+                  {safeIdx + 1} / {displayImages.length}
+                </div>
+              </>
             )}
           </div>
-        )}
 
-        {/* ── Main Large Product Image ── */}
-        <div
-          ref={mainImageRef}
-          className="relative flex-1 w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 group shadow-soft-sm"
-          style={{ aspectRatio: "3 / 4" }}
-        >
-          <Image
-            src={displayImages[safeIdx]}
-            alt="Main product visual"
-            fill
-            className="object-cover transition-all duration-500 ease-out"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 58vw, 750px"
-            priority
-          />
-
-          {/* Navigation Arrows on Main Image (when multiple images) */}
           {displayImages.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={handlePrev}
-                aria-label="Previous image"
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                aria-label="Next image"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </>
-          )}
-
-          {/* Counter pill */}
-          {displayImages.length > 1 && (
-            <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold tracking-wider shadow-sm pointer-events-none">
-              {safeIdx + 1} / {displayImages.length}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              {displayImages.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveIdx(i)}
+                  className={`relative overflow-hidden shrink-0 rounded-xl transition-all cursor-pointer ${
+                    safeIdx === i
+                      ? "ring-2 ring-[#997b47] ring-offset-1 shadow-xs"
+                      : "ring-1 ring-stone-200 opacity-70"
+                  }`}
+                  style={{ width: "64px", aspectRatio: "3 / 4" }}
+                >
+                  <Image src={img} alt="" fill className="object-cover" sizes="64px" />
+                </button>
+              ))}
             </div>
           )}
-
-          {/* Fullscreen Expand / Lightbox Trigger */}
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(true)}
-            aria-label="Enlarge image"
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 shadow-sm backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 cursor-pointer z-10"
-            title="Click to view full screen"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
