@@ -746,3 +746,19 @@
     opacity: 1;
   }
 }
+
+/* =============================================
+   HOME HERO — per-slide focal point (mobile only)
+   Below 640px the 16:9 banners are cropped hard by `object-fit: cover`, so
+   each slide needs its own object-position to keep the subject in frame.
+   At 640px and up, 50% 50% reproduces the previous `bg-center` exactly.
+   ============================================= */
+.hero-slide-img {
+  object-position: 50% 50%;
+}
+
+@media (max-width: 639px) {
+  .hero-slide-img {
+    object-position: var(--hero-focus-x, 50%) 50%;
+  }
+}

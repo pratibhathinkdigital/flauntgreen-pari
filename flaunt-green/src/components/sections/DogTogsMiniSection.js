@@ -32,7 +32,7 @@ export default function DogTogsMiniSection({ title, showSubheading = true }) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-[5px]">
             {/* Left Card — Festive Wear */}
-            <div className="relative overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
+            <div className="relative overflow-hidden aspect-[4/3] sm:aspect-[16/9]">
               <Image
                 src={images.dogTogs.left}
                 alt="Festive Wear"
@@ -41,25 +41,23 @@ export default function DogTogsMiniSection({ title, showSubheading = true }) {
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               <div
-                className="absolute inset-y-0 left-0 w-[46%] flex items-center"
+                className="absolute inset-y-0 left-0 w-[62%] sm:w-[46%] flex items-center"
                 style={{
                   background: "linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.55) 60%, transparent 100%)",
                 }}
               >
-                <div className="px-6 sm:px-6">
-                  <p className="font-heading tracking-widest text-white text-[30px] leading-tight">
+                <div className="px-5 sm:px-6">
+                  <p className="font-heading tracking-widest text-white text-[26px] sm:text-[30px] leading-tight">
                     FESTIVE
                   </p>
                   <div className="w-[64px] h-[1.5px] bg-white mt-3 mb-3" />
 
-                  <p className="text-white text-[18px] leading-relaxed max-w-[400px] ">
+                  <p className="text-white text-[15px] sm:text-[18px] leading-relaxed max-w-[400px] ">
                     Make your pup the star <br />of all festivities
-
-
                   </p>
                   <Link
                     href="/dog_togs/collections/festive"
-                    className="mt-4 inline-block text-[14px] uppercase tracking-widest font-medium px-4 py-2 bg-[#F0E9DC] text-[#1C2A3A] transition-all duration-[250ms] hover:bg-[#E0D5C0]"
+                    className="mt-4 inline-block text-[12px] sm:text-[14px] uppercase tracking-widest font-medium whitespace-nowrap px-4 py-2 bg-[#F0E9DC] text-[#1C2A3A] transition-all duration-[250ms] hover:bg-[#E0D5C0]"
                   >
                     SHOP FESTIVE
                   </Link>
@@ -68,7 +66,7 @@ export default function DogTogsMiniSection({ title, showSubheading = true }) {
             </div>
 
             {/* Right Card — Pawsails */}
-            <div className="relative overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
+            <div className="relative overflow-hidden aspect-[4/3] sm:aspect-[16/9]">
               <Image
                 src={images.dogTogs.right}
                 alt="Pawsails"
@@ -77,22 +75,22 @@ export default function DogTogsMiniSection({ title, showSubheading = true }) {
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               <div
-                className="absolute inset-y-0 left-0 w-2/5 flex items-center"
+                className="absolute inset-y-0 left-0 w-[62%] sm:w-2/5 flex items-center"
                 style={{
                   background: "linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.55) 60%, transparent 100%)",
                 }}
               >
-                <div className="px-6 sm:px-10">
-                  <p className="font-heading tracking-widest text-white text-[30px] leading-tight">
+                <div className="px-5 sm:px-10">
+                  <p className="font-heading tracking-widest text-white text-[26px] sm:text-[30px] leading-tight">
                     PAWSAILS
                   </p>
                   <div className="w-[64px] h-[1.5px] bg-white mt-3 mb-3" />
-                  <p className="text-white text-[18px] leading-relaxed max-w-[280px]">
+                  <p className="text-white text-[15px] sm:text-[18px] leading-relaxed max-w-[280px]">
                     This collection is breezy, bold, and built for play.
                   </p>
                   <Link
                     href="/dog_togs/collections/pawsails"
-                    className="mt-4 inline-block text-[14px] uppercase tracking-widest font-medium whitespace-nowrap px-4 py-2 bg-[#F0E9DC] text-[#1C2A3A] transition-all duration-[250ms] hover:bg-[#E0D5C0]"
+                    className="mt-4 inline-block text-[12px] sm:text-[14px] uppercase tracking-widest font-medium whitespace-nowrap px-4 py-2 bg-[#F0E9DC] text-[#1C2A3A] transition-all duration-[250ms] hover:bg-[#E0D5C0]"
                   >
                     SHOP PAWSAILS
                   </Link>
