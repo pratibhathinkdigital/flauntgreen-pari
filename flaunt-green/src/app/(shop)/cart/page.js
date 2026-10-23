@@ -8,16 +8,21 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 import NewsletterSection from "@/components/sections/NewsletterSection";
 import toast from "react-hot-toast";
-import { couponsApi } from "@/services/api";
+import { couponsApi, ordersApi } from "@/services/api";
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
-  const { items, updateQuantity, removeItem, totalPrice, clearCart, appliedCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
+  const { items, updateQuantity, removeItem, totalPrice, clearCart, appliedCoupons, appliedCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [isFirstOrder, setIsFirstOrder] = useState(Boolean(user?.is_first_order));
+
+  const couponsList = (appliedCoupons && appliedCoupons.length > 0)
+    ? appliedCoupons
+    : (appliedCoupon ? [appliedCoupon] : []);
 
   useEffect(() => {
     setMounted(true);
@@ -27,20 +32,51 @@ export default function CartPage() {
       clearCart();
     } else {
       syncStockWithBackend?.();
+      // Check first order eligibility from authoritative backend
+      ordersApi.checkFirstOrderEligibility()
+        .then((res) => {
+          if (typeof res.data?.eligible === "boolean") {
+            setIsFirstOrder(res.data.eligible);
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not check first order eligibility:", err);
+          if (auth.user?.is_first_order !== undefined) {
+            setIsFirstOrder(Boolean(auth.user.is_first_order));
+          }
+        });
     }
   }, [clearCart, syncStockWithBackend]);
 
   const handleApplyCoupon = async (e) => {
-    e?.preventDefault();
-    if (!couponCode.trim()) return;
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const cleaned = couponCode.trim().toUpperCase();
+    if (!cleaned) return;
+
+    if (couponsList.some((c) => c.code.toUpperCase() === cleaned)) {
+      setCouponError(`Promo code "${cleaned}" is already applied!`);
+      return;
+    }
+
+    if (couponsList.length >= 3) {
+      setCouponError("You can apply a maximum of 3 promo codes per order.");
+      return;
+    }
+
     setCouponLoading(true);
     setCouponError("");
     try {
-      const res = await couponsApi.validate(couponCode.trim(), totalPrice());
+      const res = await couponsApi.validate(cleaned, totalPrice());
       if (res.data?.valid) {
-        applyCoupon(res.data.coupon);
-        setCouponCode("");
-        toast.success(`Promo code applied: ${res.data.coupon.label}`);
+        const result = applyCoupon(res.data.coupon);
+        if (result?.success === false) {
+          setCouponError(result.message);
+          toast.error(result.message);
+        } else {
+          setCouponCode("");
+          toast.success(`🎉 Applied ${res.data.coupon.code}: ${res.data.coupon.label}`);
+        }
       } else {
         setCouponError(res.data?.message || "Invalid promo code");
       }
@@ -53,23 +89,39 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveCoupon = () => {
-    removeCoupon();
+  const handleRemoveCoupon = (codeToRemove) => {
+    removeCoupon(codeToRemove);
     setCouponError("");
-    toast.success("Promo code removed.");
+    toast.success(`Promo code ${codeToRemove || ""} removed.`);
   };
 
   const subtotal = totalPrice();
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === "percent") {
-      discountAmount = (subtotal * appliedCoupon.value) / 100;
-      if (appliedCoupon.max_discount) discountAmount = Math.min(discountAmount, appliedCoupon.max_discount);
+  
+  const couponDiscounts = couponsList.map((coupon) => {
+    let disc = 0;
+    if (coupon.type === "percent") {
+      disc = Math.round((subtotal * coupon.value) / 100);
+      if (coupon.max_discount) disc = Math.min(disc, coupon.max_discount);
     } else {
-      discountAmount = Math.min(appliedCoupon.value, subtotal);
+      disc = Math.min(Number(coupon.value), subtotal);
     }
-  }
-  const finalTotal = Math.max(0, subtotal - discountAmount);
+    return {
+      code: coupon.code,
+      label: coupon.label || (coupon.type === "percent" ? `${coupon.value}% off` : `₹${coupon.value} off`),
+      discount: disc,
+    };
+  });
+
+  const couponDiscountAmount = Math.min(
+    couponDiscounts.reduce((sum, c) => sum + c.discount, 0),
+    subtotal
+  );
+
+  // ── First Order 5% Discount Calculation ──────────────────────────
+  const firstOrderDiscount = isFirstOrder ? Math.round(subtotal * 0.05) : 0;
+  const totalDiscount = Math.min(couponDiscountAmount + firstOrderDiscount, subtotal);
+  const discountAmount = totalDiscount;
+  const finalTotal = Math.max(0, subtotal - totalDiscount);
 
   if (!mounted) return null; // Avoid hydration mismatch
 
@@ -95,10 +147,26 @@ export default function CartPage() {
               Please Log In to View Your Cart
             </h1>
 
-            <p className="text-slate-500 mb-8 text-sm sm:text-base leading-relaxed max-w-md">
+            <p className="text-slate-500 mb-6 text-sm sm:text-base leading-relaxed max-w-md">
               Your cart items, custom selections, and saved preferences are linked securely to your account.
               Please sign in to access your shopping bag and proceed to checkout.
             </p>
+
+            {/* First Order Promotional Teaser Banner */}
+            <div className="mb-8 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-amber-50/50 to-emerald-50 border border-emerald-200/80 max-w-md w-full flex items-center gap-3 text-left shadow-2xs">
+              <span className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 text-base shadow-xs">
+                🎁
+              </span>
+              <div>
+                <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  First Order Welcome Perk!
+                  <span className="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-1.5 py-0.2 rounded-full uppercase">5% OFF</span>
+                </p>
+                <p className="text-[11px] text-emerald-800 mt-0.5 leading-snug">
+                  Register or log in now to automatically receive <strong>5% discount</strong> on your entire first purchase.
+                </p>
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full max-w-sm mb-12">
               <Link
@@ -184,6 +252,30 @@ export default function CartPage() {
                 Clear all items
               </button>
             </div>
+
+            {/* First Order Discount Active Callout Banner */}
+            {isFirstOrder && (
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50 border border-emerald-200 shadow-soft-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-emerald-950 font-heading">
+                        First Order Perk: 5% Discount Automatically Applied!
+                      </h4>
+                      <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-800 mt-0.5">
+                      As a welcome gift on your first order, a <strong>5% discount</strong> applies across all items in your cart. You save <strong className="font-bold">₹{firstOrderDiscount.toLocaleString("en-IN")}</strong>!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
               {/* Cart Items */}
@@ -296,12 +388,42 @@ export default function CartPage() {
                         <span>Subtotal</span>
                         <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                       </div>
-                      {appliedCoupon && (
-                        <div className="flex justify-between text-emerald-700">
-                          <span className="flex items-center gap-1 font-medium">
-                            <Tag className="w-3.5 h-3.5" /> Discount ({appliedCoupon.code})
+
+                      {/* 5% First Order Discount Row */}
+                      {isFirstOrder && firstOrderDiscount > 0 && (
+                        <div className="flex justify-between items-center text-emerald-700 text-sm bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
+                          <span className="flex items-center gap-1.5 font-semibold text-emerald-900">
+                            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                            First Order Discount (5%)
+                            <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded font-bold uppercase">
+                              Welcome
+                            </span>
                           </span>
-                          <span className="font-bold">-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
+                          <span className="font-bold text-emerald-800">
+                            -₹{firstOrderDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Individual Coupon Discounts */}
+                      {couponDiscounts.map((cd, idx) => (
+                        <div key={cd.code} className="flex justify-between text-emerald-700 text-sm">
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Tag className="w-3.5 h-3.5" /> Coupon #{idx + 1} ({cd.code})
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                              Stacked
+                            </span>
+                          </span>
+                          <span className="font-bold">-₹{cd.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
+                        </div>
+                      ))}
+                      {couponsList.length > 1 && (
+                        <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1.5 bg-emerald-50/60 p-2 rounded-xl text-sm">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-emerald-600" />
+                            Total Stacked Promo Savings ({couponsList.length} codes)
+                          </span>
+                          <span>-₹{couponDiscountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} /-</span>
                         </div>
                       )}
                       <div className="flex justify-between text-slate-600">
@@ -339,58 +461,174 @@ export default function CartPage() {
 
                   {/* Promo Code Box */}
                   <div className="border border-slate-100 rounded-2xl p-6 bg-white shadow-soft-sm">
+                    {/* Header with Badges */}
                     <h3 className="font-bold text-[#1C2A3A] mb-3 text-base flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-[#41542f]" /> Promo Code
+                        <Tag className="w-4 h-4 text-[#41542f]" /> Promo Codes
                       </span>
+                      {couponsList.length > 0 && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
+                          {couponsList.length}/3 Stacked
+                        </span>
+                      )}
                     </h3>
 
-                    {appliedCoupon ? (
-                      <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-600" />
-                          <div>
-                            <span className="font-mono font-bold text-emerald-800 text-sm tracking-wider">{appliedCoupon.code}</span>
-                            <p className="text-xs text-emerald-600 font-medium">{appliedCoupon.label || "Promo Applied"}</p>
-                          </div>
+                    {/* Stackable Promo Banner */}
+                    <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/90 via-emerald-50/60 to-amber-50/40 border border-amber-200/80 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-[#41542f] text-white text-[11px] shadow-xs">
+                            🎟️
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 tracking-tight">
+                            Stack Multiple Coupons
+                          </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={handleRemoveCoupon}
-                          className="text-xs font-semibold text-red-500 hover:text-red-700 bg-white border border-red-200 px-2.5 py-1 rounded-lg transition-colors shadow-sm"
-                        >
-                          Remove
-                        </button>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-200/60">
+                          <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                          Up to 3 Allowed
+                        </span>
                       </div>
-                    ) : (
-                      <form onSubmit={handleApplyCoupon} className="space-y-2">
+
+                      <p className="text-[11px] text-slate-600 leading-snug">
+                        {couponsList.length === 0 && (
+                          <>Combine welcome offers &amp; promotional discounts together! Enter your first code below, then stack more.</>
+                        )}
+                        {couponsList.length === 1 && (
+                          <span className="text-emerald-700 font-semibold">
+                            🎉 1 coupon applied! Enter another code below to stack extra savings (2 slots remaining).
+                          </span>
+                        )}
+                        {couponsList.length === 2 && (
+                          <span className="text-emerald-700 font-semibold">
+                            🔥 2 coupons stacked! You can add 1 more code to maximize your discount.
+                          </span>
+                        )}
+                        {couponsList.length >= 3 && (
+                          <span className="text-emerald-800 font-semibold">
+                            ⭐ Max 3 coupons stacked! Best possible promo savings unlocked for this order.
+                          </span>
+                        )}
+                      </p>
+
+                      {/* 3 Interactive Slot Badges */}
+                      <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-amber-200/50">
+                        {[0, 1, 2].map((slotIdx) => {
+                          const isFilled = couponsList[slotIdx];
+                          return (
+                            <div
+                              key={slotIdx}
+                              className={`flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-semibold transition-all ${
+                                isFilled
+                                  ? "bg-emerald-600 text-white shadow-xs"
+                                  : couponsList.length === slotIdx
+                                  ? "bg-white text-[#41542f] border border-[#41542f]/40 font-bold shadow-2xs"
+                                  : "bg-white/60 text-slate-400 border border-slate-200/50"
+                              }`}
+                            >
+                              {isFilled ? (
+                                <>
+                                  <Check className="w-3 h-3 shrink-0" />
+                                  <span className="truncate max-w-[50px] font-mono">{isFilled.code}</span>
+                                </>
+                              ) : couponsList.length === slotIdx ? (
+                                <span>Slot {slotIdx + 1} (Enter)</span>
+                              ) : (
+                                <span>Slot {slotIdx + 1}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Applied coupons list */}
+                    {couponsList.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {couponDiscounts.map((cd, idx) => (
+                          <div
+                            key={cd.code}
+                            className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between transition-all animate-fade-in"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold shrink-0">
+                                {idx + 1}
+                              </span>
+                              <div>
+                                <span className="font-mono font-bold text-emerald-800 text-sm tracking-wider">{cd.code}</span>
+                                <p className="text-xs text-emerald-700 font-medium">
+                                  {cd.label} • Saved ₹{cd.discount.toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCoupon(cd.code)}
+                              className="text-xs font-semibold text-red-500 hover:text-red-700 bg-white border border-red-200 px-2.5 py-1 rounded-lg transition-colors shadow-xs"
+                              title={`Remove ${cd.code}`}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {couponsList.length < 3 ? (
+                      <div className="space-y-2">
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="ENTER CODE (E.G. WELCOME10)"
+                            placeholder={
+                              couponsList.length === 0
+                                ? "Enter 1st promo code (e.g. WELCOME10)"
+                                : couponsList.length === 1
+                                ? "Enter 2nd code to stack savings..."
+                                : "Enter 3rd & final code..."
+                            }
                             value={couponCode}
                             onChange={(e) => {
                               setCouponCode(e.target.value.toUpperCase());
                               if (couponError) setCouponError("");
                             }}
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] text-sm uppercase font-mono tracking-wider"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleApplyCoupon(e);
+                              }
+                            }}
+                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f] text-sm uppercase font-mono tracking-wider placeholder:normal-case placeholder:font-sans"
                           />
                           <button
-                            type="submit"
+                            type="button"
+                            onClick={handleApplyCoupon}
                             disabled={couponLoading || !couponCode.trim()}
-                            className="px-5 py-2.5 rounded-xl bg-[#41542f] text-white font-medium hover:bg-[#344325] transition-colors text-sm disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                            className="px-5 py-2.5 rounded-xl bg-[#41542f] text-white font-medium hover:bg-[#344325] transition-colors text-sm disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                           >
                             {couponLoading ? (
                               <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
+                            ) : couponsList.length === 0 ? (
                               "Apply"
+                            ) : (
+                              `+ Stack #${couponsList.length + 1}`
                             )}
                           </button>
                         </div>
                         {couponError && (
                           <p className="text-xs text-red-500 mt-1 font-medium">{couponError}</p>
                         )}
-                      </form>
+                        <p className="text-[11px] text-slate-500 mt-1 font-medium flex items-center gap-1">
+                          <span>💡 Tip: Apply up to 3 coupons one by one to combine all discounts together!</span>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
+                        <p className="text-xs text-emerald-800 font-semibold flex items-center justify-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-emerald-600" />
+                          Maximum 3 promo codes stacked for maximum savings!
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

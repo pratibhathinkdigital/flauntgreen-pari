@@ -15,58 +15,284 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import ProductReviewsSection from "@/components/shop/ProductReviewsSection";
 import { getInventoryForSlug } from "@/data/inventory";
-import { Leaf, Truck, RotateCcw, Star, Plus, Minus, Ruler, Check, Hand, Heart } from "lucide-react";
+import {
+  Leaf,
+  Truck,
+  RotateCcw,
+  Star,
+  Plus,
+  Minus,
+  Ruler,
+  Check,
+  Hand,
+  Heart,
+  Sparkles,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  X,
+} from "lucide-react";
 import { productsApi, reviewsApi } from "@/services/api";
 import { getImageUrl } from "@/lib/axios";
+import { formatPrice } from "@/lib/utils";
 
 /* ─── Product Data ─────────────────────────────────────────────────────────── */
 
-/* ─── Thumbnail Gallery (Strict 5 images max) ──────────────────────────────── */
+/* ─── Thumbnail Gallery (Max 5 images, 100% Synchronized Equal Height) ─────── */
 function ImageGallery({ images = [] }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Strictly enforce max 5 images to keep the UI perfectly aligned
-  const displayImages = (images || []).slice(0, 5);
+  const mainImageRef = useRef(null);
+
+  // Maximum 5 images strictly to fit exactly with main visual height
+  const displayImages = (images || []).filter(Boolean).slice(0, 5);
   const safeIdx = activeIdx < displayImages.length ? activeIdx : 0;
 
+  const handlePrev = (e) => {
+    e?.stopPropagation?.();
+    setActiveIdx((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1));
+  };
+
+  const handleNext = (e) => {
+    e?.stopPropagation?.();
+    setActiveIdx((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0));
+  };
+
+  if (!displayImages.length) {
+    return (
+      <div
+        className="w-full bg-stone-100 rounded-2xl flex items-center justify-center text-stone-400 font-medium"
+        style={{ aspectRatio: "3 / 4" }}
+      >
+        No image available
+      </div>
+    );
+  }
+
+  const thumbGap = 8;
+  const count = displayImages.length;
+
   return (
-    <div className="flex gap-3 items-start">
-      {displayImages.length > 1 && (
-        <div className="flex flex-col gap-2 shrink-0 max-h-[540px] overflow-y-auto pr-0.5">
-          {displayImages.map((img, i) => (
+    <>
+      <div className="w-full">
+        {/* ── Desktop Layout: 100% Equal Height Synchronized ── */}
+        <div className="hidden md:grid md:grid-cols-[78px_1fr] md:gap-3.5 items-stretch w-full">
+          {/* Left Column: Exactly equal height to main image, flush top to bottom */}
+          {count > 1 && (
+            <div className="w-[78px] h-full flex flex-col justify-between py-0 select-none">
+              {displayImages.map((img, i) => {
+                const isSelected = safeIdx === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveIdx(i)}
+                    aria-label={`View photo ${i + 1}`}
+                    className={`relative w-full rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer ${
+                      isSelected
+                        ? "ring-2 ring-[#997b47] ring-offset-2 shadow-sm scale-[1.02]"
+                        : "ring-1 ring-stone-200/90 hover:ring-stone-400 opacity-75 hover:opacity-100"
+                    }`}
+                    style={{
+                      height: `calc((100% - ${(count - 1) * thumbGap}px) / ${count})`,
+                    }}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Product view ${i + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="78px"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-[#997b47]/10 pointer-events-none" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Right Column: Main Image */}
+          <div
+            ref={mainImageRef}
+            className={`relative w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 group shadow-soft-sm ${
+              count <= 1 ? "md:col-span-2" : ""
+            }`}
+            style={{ aspectRatio: "3 / 4" }}
+          >
+            <Image
+              src={displayImages[safeIdx]}
+              alt="Main product visual"
+              fill
+              className="object-cover transition-all duration-500 ease-out"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 58vw, 750px"
+              priority
+            />
+
+            {/* Navigation Arrows on Main Image (when multiple images) */}
+            {count > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-stone-800 shadow-md backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 md:transition-all hover:scale-105 cursor-pointer z-10"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            {/* Counter pill */}
+            {count > 1 && (
+              <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold tracking-wider shadow-sm pointer-events-none">
+                {safeIdx + 1} / {count}
+              </div>
+            )}
+
+            {/* Fullscreen Expand / Lightbox Trigger */}
             <button
-              key={i}
               type="button"
-              onClick={() => setActiveIdx(i)}
-              className={`relative overflow-hidden shrink-0 transition-all duration-200 rounded-sm ${
-                safeIdx === i
-                  ? "ring-2 ring-[#B08D3F] ring-offset-1"
-                  : "ring-1 ring-gray-200 hover:ring-gray-400 opacity-80 hover:opacity-100"
-              }`}
-              style={{ width: "80px", height: "100px" }}
+              onClick={() => setLightboxOpen(true)}
+              aria-label="Enlarge image"
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 shadow-sm backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 cursor-pointer z-10"
+              title="Click to view full screen"
             >
-              <Image src={img} alt={`View ${i + 1}`} fill className="object-cover" sizes="80px" />
+              <Maximize2 className="w-4 h-4" />
             </button>
-          ))}
+          </div>
+        </div>
+
+        {/* ── Mobile Layout (< md): Main Image on Top, Horizontal Thumbnails Below ── */}
+        <div className="md:hidden flex flex-col gap-3 w-full">
+          <div
+            className="relative w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/70 shadow-soft-sm"
+            style={{ aspectRatio: "3 / 4" }}
+          >
+            <Image
+              src={displayImages[safeIdx]}
+              alt="Main product visual"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            {count > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-stone-800 shadow-sm flex items-center justify-center z-10 cursor-pointer"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-stone-800 shadow-sm flex items-center justify-center z-10 cursor-pointer"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold">
+                  {safeIdx + 1} / {count}
+                </div>
+              </>
+            )}
+          </div>
+
+          {count > 1 && (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              {displayImages.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveIdx(i)}
+                  className={`relative overflow-hidden shrink-0 rounded-xl transition-all cursor-pointer ${
+                    safeIdx === i
+                      ? "ring-2 ring-[#997b47] ring-offset-1 shadow-xs"
+                      : "ring-1 ring-stone-200 opacity-70"
+                  }`}
+                  style={{ width: "64px", aspectRatio: "3 / 4" }}
+                >
+                  <Image src={img} alt="" fill className="object-cover" sizes="64px" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Fullscreen Lightbox Modal ── */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {displayImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all cursor-pointer z-50"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative w-full h-full" style={{ maxHeight: "85vh" }}>
+              <Image
+                src={displayImages[safeIdx]}
+                alt="Enlarged product view"
+                fill
+                className="object-contain"
+                sizes="90vw"
+                priority
+              />
+            </div>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium tracking-wider">
+              {safeIdx + 1} / {displayImages.length}
+            </div>
+          </div>
         </div>
       )}
-      <div className="relative flex-1 overflow-hidden bg-gray-100 rounded-sm" style={{ aspectRatio: "4/5" }}>
-        {displayImages[safeIdx] ? (
-          <Image
-            src={displayImages[safeIdx]}
-            alt="Product"
-            fill
-            className="object-cover transition-opacity duration-300"
-            sizes="(max-width: 768px) 100vw, 45vw"
-            priority
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            No image available
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -150,38 +376,58 @@ function SizeSelector({ sizes, inventory, selected, onSelect, onOpenGuide }) {
   );
 }
 
-/* ─── Color Selector (square, reflects selected variant) ──────────────────── */
+/* ─── Fabric / Color Selector (renders fabric texture photo or color fallback) ── */
 function ColorSelector({ colors, selected, onSelect }) {
+  if (!colors || colors.length === 0 || (colors.length === 1 && colors[0].name === "Default" && !colors[0].image)) {
+    return null;
+  }
+
+  const hasAnyImages = colors.some(c => !!c.image);
+
   return (
     <div>
       <span className="text-sm font-medium text-gray-800 mb-2 block">
-        Color:{" "}
+        {hasAnyImages ? "Fabric Texture / Color: " : "Color: "}
         <span className="font-normal" style={{ color: "#B08D3F" }}>
           {colors[selected]?.name}
         </span>
       </span>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 flex-wrap">
         {colors.map((color, i) => {
           const isSelected = selected === i;
           return (
             <button
-              key={color.name}
+              key={(color.name || "c") + i}
               onClick={() => onSelect(i)}
               aria-label={color.name}
               aria-pressed={isSelected}
               title={color.name}
-              className={`w-9 h-9 rounded-none border flex items-center justify-center transition-all duration-200 ${
+              className={`relative rounded-lg border overflow-hidden flex items-center justify-center transition-all duration-200 ${
                 isSelected
-                  ? "border-gray-900 ring-2 ring-gray-900 ring-offset-1"
-                  : "border-gray-300 hover:border-gray-600"
+                  ? "border-[#41542f] ring-2 ring-[#41542f] ring-offset-2 scale-105 shadow-sm"
+                  : "border-gray-300 hover:border-gray-500 hover:scale-102"
               }`}
-              style={{ backgroundColor: color.value }}
+              style={{ width: "44px", height: "44px" }}
             >
-              {isSelected && (
-                <Check
-                  className="w-4 h-4 text-white"
-                  style={{ filter: "drop-shadow(0 0 1px rgba(0,0,0,0.75))" }}
+              {color.image ? (
+                <img
+                  src={color.image}
+                  alt={color.name}
+                  className="w-full h-full object-cover"
                 />
+              ) : (
+                <div
+                  className="w-full h-full"
+                  style={{ backgroundColor: color.value || "#e2e8f0" }}
+                />
+              )}
+              {isSelected && (
+                <span className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                  <Check
+                    className="w-4 h-4 text-white"
+                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.85))" }}
+                  />
+                </span>
               )}
             </button>
           );
@@ -455,10 +701,6 @@ function ProductTabs({ product, slug, reviews, stats, activeTab, onTabChange, on
                   <span className="block text-[11px] font-bold uppercase tracking-wider text-stone-400">Colour</span>
                   <span className="text-sm font-semibold text-[#141b28]">{product.details.colour || "Natural"}</span>
                 </div>
-                <div>
-                  <span className="block text-[11px] font-bold uppercase tracking-wider text-stone-400">SKU</span>
-                  <span className="text-sm font-mono font-medium text-[#141b28]">{product.details.sku}</span>
-                </div>
               </div>
 
               {(product.model?.size || product.model?.text) && (
@@ -648,8 +890,15 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
       size: apiProduct.model_size || "M" 
     },
     colors: apiProduct.variants && apiProduct.variants.length > 0
-      ? [...new Map(apiProduct.variants.map(v => [v.color_name || "Default", { name: v.color_name || "Default", value: v.color_hex || "#888888" }])).values()]
-      : [{ name: "Default", value: "#888888" }],
+      ? [...new Map(apiProduct.variants.map(v => [
+          v.color_name || "Default", 
+          { 
+            name: v.color_name || "Default", 
+            value: v.color_hex || "#888888",
+            image: v.image ? getImageUrl(v.image) : null,
+          }
+        ])).values()]
+      : [{ name: "Default", value: "#888888", image: null }],
     sizes: apiProduct.variants && apiProduct.variants.length > 0
       ? [...new Set(apiProduct.variants.filter(v => v.stock > 0 || true).map(v => v.size))].filter(Boolean)
       : ["S", "M", "L", "XL"],
@@ -914,12 +1163,12 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
 
       {/* ── Product Hero ── */}
       <section className="mx-auto px-4 md:px-8 pb-14" style={{ maxWidth: "1280px" }}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+          <div className="lg:col-span-7">
             <ImageGallery images={product.images} />
           </div>
 
-          <div className="lg:col-span-3 flex flex-col gap-5">
+          <div className="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-24">
             <p className="text-sm" style={{ color: "#B08D3F" }}>
               Collection <span className="mx-1">&bull;</span> {product.collection}
             </p>
@@ -936,7 +1185,13 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
 
             {/* Price */}
             <div>
-              <p className="font-bold" style={{ fontSize: "28px", color: "#1a1a1a" }}>{formatPrice(product.price)}</p>
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <p className="font-bold" style={{ fontSize: "28px", color: "#1a1a1a" }}>{formatPrice(product.price)}</p>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 inline-flex items-center gap-1 shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  First Order: 5% OFF at checkout
+                </span>
+              </div>
               <p className="text-xs mt-0.5" style={{ color: "#888" }}>Inclusive of all Taxes.</p>
             </div>
 

@@ -24,7 +24,8 @@ import {
   Plus,
   Home,
   Briefcase,
-  RefreshCw
+  RefreshCw,
+  X
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
@@ -97,7 +98,7 @@ const loadRazorpaySDK = () => {
 export default function CheckoutClient() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const { items, totalPrice, clearCart, appliedCoupon: cartCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
+  const { items, totalPrice, clearCart, appliedCoupons: storeCoupons, appliedCoupon: cartCoupon, applyCoupon, removeCoupon, syncStockWithBackend } = useCartStore();
   const { user } = useAuthStore();
 
   // Form State
@@ -131,9 +132,10 @@ export default function CheckoutClient() {
   const [shippingMethod, setShippingMethod] = useState("standard"); // 'standard' (free) or 'express' (150)
   const [paymentMethod, setPaymentMethod] = useState("online"); // 'online' or 'cod'
   const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [appliedCoupons, setAppliedCoupons] = useState([]);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [isFirstOrder, setIsFirstOrder] = useState(Boolean(user?.is_first_order));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
   const [errors, setErrors] = useState({});
@@ -168,6 +170,7 @@ export default function CheckoutClient() {
     });
   };
 
+  // Mount Effect: Only run ONCE on page load (Never re-run when coupons change)
   useEffect(() => {
     setMounted(true);
     loadRazorpaySDK();
@@ -189,11 +192,21 @@ export default function CheckoutClient() {
       }));
     }
 
-    if (cartCoupon) {
-      setAppliedCoupon(cartCoupon);
-    }
+    // Check first order discount eligibility with server
+    ordersApi.checkFirstOrderEligibility()
+      .then((res) => {
+        if (typeof res.data?.eligible === "boolean") {
+          setIsFirstOrder(res.data.eligible);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not check first order eligibility:", err);
+        if (auth.user?.is_first_order !== undefined) {
+          setIsFirstOrder(Boolean(auth.user.is_first_order));
+        }
+      });
 
-    // Load saved addresses for logged-in user
+    // Load saved addresses ONCE for logged-in user
     const fetchSavedAddresses = async () => {
       try {
         setLoadingAddresses(true);
@@ -215,7 +228,16 @@ export default function CheckoutClient() {
     };
 
     fetchSavedAddresses();
-  }, [cartCoupon]);
+  }, []); // Empty dependency array ensures addresses and form are NEVER reloaded or wiped out
+
+  // Separate Coupon Sync Effect: Only syncs coupon state, NEVER touches address formData
+  useEffect(() => {
+    if (storeCoupons && storeCoupons.length > 0) {
+      setAppliedCoupons(storeCoupons);
+    } else if (cartCoupon) {
+      setAppliedCoupons([cartCoupon]);
+    }
+  }, [cartCoupon, storeCoupons]);
 
   if (!mounted) return null;
 
@@ -223,16 +245,31 @@ export default function CheckoutClient() {
   const subtotal = totalPrice();
   const shippingFee = shippingMethod === "express" ? 150 : 0;
   
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === "percent") {
-      discountAmount = Math.round((subtotal * appliedCoupon.value) / 100);
-    } else if (appliedCoupon.type === "fixed") {
-      discountAmount = appliedCoupon.value;
+  // Calculate individual discount per applied coupon & sum
+  const couponDiscounts = (appliedCoupons || []).map((coupon) => {
+    let disc = 0;
+    if (coupon.type === "percent") {
+      disc = Math.round((subtotal * coupon.value) / 100);
+      if (coupon.max_discount) disc = Math.min(disc, coupon.max_discount);
+    } else if (coupon.type === "fixed") {
+      disc = Math.min(Number(coupon.value), subtotal);
     }
-  }
-  discountAmount = Math.min(discountAmount, subtotal);
-  const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount);
+    return {
+      id: coupon.id,
+      code: coupon.code,
+      label: coupon.label || (coupon.type === "percent" ? `${coupon.value}% off` : `₹${coupon.value} off`),
+      discount: disc,
+      coupon,
+    };
+  });
+
+  const couponTotal = couponDiscounts.reduce((sum, c) => sum + c.discount, 0);
+
+  // ── First Order 5% Discount Calculation ──────────────────────────
+  const firstOrderDiscount = isFirstOrder ? Math.round(subtotal * 0.05) : 0;
+  const totalDiscount = Math.min(couponTotal + firstOrderDiscount, subtotal);
+  const discountAmount = totalDiscount;
+  const totalAmount = Math.max(0, subtotal + shippingFee - totalDiscount);
 
   // Handle Input Changes
   const handleInputChange = (e) => {
@@ -252,24 +289,40 @@ export default function CheckoutClient() {
 
   // Coupon apply
   const handleApplyCoupon = async (e) => {
-    e?.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     setCouponError("");
     const cleaned = couponInput.trim().toUpperCase();
     if (!cleaned) return;
+
+    if (appliedCoupons.some((c) => c.code.toUpperCase() === cleaned)) {
+      setCouponError(`Promo code "${cleaned}" is already applied!`);
+      return;
+    }
+
+    if (appliedCoupons.length >= 3) {
+      setCouponError("You can stack a maximum of 3 promo codes.");
+      return;
+    }
 
     setCouponLoading(true);
     try {
       const res = await couponsApi.validate(cleaned, subtotal);
       if (res.data?.valid) {
-        setAppliedCoupon(res.data.coupon);
-        applyCoupon(res.data.coupon);
-        setCouponInput("");
-        toast.success(`Promo code applied: ${res.data.coupon.label}`);
+        const result = applyCoupon(res.data.coupon);
+        if (result?.success === false) {
+          setCouponError(result.message);
+          toast.error(result.message);
+        } else {
+          setAppliedCoupons((prev) => [...prev, res.data.coupon]);
+          setCouponInput("");
+          toast.success(`🎉 Applied ${res.data.coupon.code}: ${res.data.coupon.label}`);
+        }
       } else {
         setCouponError(res.data?.message || "Invalid promo code");
       }
     } catch (err) {
-      const msg = err.response?.data?.message || "Invalid promo code or order requirements not met.";
+      const msg = err.response?.data?.message || "Invalid promo code or minimum spend requirement not met.";
       setCouponError(msg);
       toast.error(msg);
     } finally {
@@ -277,11 +330,11 @@ export default function CheckoutClient() {
     }
   };
 
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    removeCoupon();
+  const handleRemoveCoupon = (codeToRemove) => {
+    removeCoupon(codeToRemove);
+    setAppliedCoupons((prev) => prev.filter((c) => c.code.toUpperCase() !== codeToRemove.toUpperCase()));
     setCouponError("");
-    toast.success("Promo code removed.");
+    toast.success(`Removed promo code ${codeToRemove}.`);
   };
 
   // Form Validation
@@ -355,6 +408,9 @@ export default function CheckoutClient() {
     try {
       const fullAddress = `${formData.addressLine1}${formData.addressLine2 ? ', ' + formData.addressLine2 : ''}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
+      const appliedCodesString = appliedCoupons.map((c) => c.code).join(", ") || null;
+      const appliedCodesArray = appliedCoupons.map((c) => c.code);
+
       // If Cash on Delivery, save directly to orders table
       if (paymentMethod === "cod") {
         const orderPayload = {
@@ -365,7 +421,8 @@ export default function CheckoutClient() {
           shipping_cost: shippingFee,
           total: totalAmount,
           payment_method: "cod",
-          coupon_code: appliedCoupon?.code || null,
+          coupon_code: appliedCodesString,
+          coupon_codes: appliedCodesArray,
           items: items.map((i) => ({
             product_id: i.product_id || null,
             name: i.name,
@@ -387,7 +444,7 @@ export default function CheckoutClient() {
           payload: {
             customer: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, phone: formData.phone },
             shipping_address: { first_name: formData.firstName, last_name: formData.lastName, address_line_1: formData.addressLine1, address_line_2: formData.addressLine2, city: formData.city, state: formData.state, pincode: formData.pincode },
-            subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, coupon_code: appliedCoupon?.code || null
+            subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, first_order_discount: firstOrderDiscount, coupon_discount: couponTotal, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
           },
           items: [...items],
           total: totalAmount,
@@ -413,7 +470,8 @@ export default function CheckoutClient() {
           shipping_phone: formData.phone,
           shipping_address: fullAddress,
           shipping_cost: shippingFee,
-          coupon_code: appliedCoupon?.code || null,
+          coupon_code: appliedCodesString,
+          coupon_codes: appliedCodesArray,
           items: items.map((i) => ({
             id: i.product_id,
             name: i.name,
@@ -448,7 +506,7 @@ export default function CheckoutClient() {
         // 2. Open Razorpay Checkout Modal
         try {
           const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
+            key: razorpayOrderData.razorpay_key || process.env.NEXT_PUBLIC_RAZORPAY_KEY || "rzp_test_TZnxa9wE9HqL4W",
             amount: razorpayOrderData.amount,
             currency: razorpayOrderData.currency,
             name: "Flaunt Green",
@@ -477,7 +535,7 @@ export default function CheckoutClient() {
                     payload: {
                       customer: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, phone: formData.phone },
                       shipping_address: { first_name: formData.firstName, last_name: formData.lastName, address_line_1: formData.addressLine1, address_line_2: formData.addressLine2, city: formData.city, state: formData.state, pincode: formData.pincode },
-                      subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, coupon_code: appliedCoupon?.code || null
+                      subtotal, shipping_fee: shippingFee, discount_amount: discountAmount, first_order_discount: firstOrderDiscount, coupon_discount: couponTotal, coupon_code: appliedCodesString, coupon_codes: appliedCodesArray
                     },
                     items: [...items],
                     total: totalAmount,
@@ -647,9 +705,23 @@ export default function CheckoutClient() {
                     <span>Shipping</span>
                     <span>{orderConfirmed.payload.shipping_fee === 0 ? "Free" : `₹${orderConfirmed.payload.shipping_fee}`}</span>
                   </div>
-                  {orderConfirmed.payload.discount_amount > 0 && (
+                  {orderConfirmed.payload.first_order_discount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-medium bg-emerald-50/80 p-2 rounded-lg border border-emerald-200/80">
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> First Order Discount (5%)
+                      </span>
+                      <span className="font-bold">-₹{orderConfirmed.payload.first_order_discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                  {orderConfirmed.payload.coupon_discount > 0 && (
                     <div className="flex justify-between text-[#41542f] font-medium">
-                      <span>Discount ({orderConfirmed.payload.coupon_code})</span>
+                      <span>Coupons ({orderConfirmed.payload.coupon_code})</span>
+                      <span>-₹{orderConfirmed.payload.coupon_discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                  {(!orderConfirmed.payload.first_order_discount && !orderConfirmed.payload.coupon_discount && orderConfirmed.payload.discount_amount > 0) && (
+                    <div className="flex justify-between text-[#41542f] font-medium">
+                      <span>Discount ({orderConfirmed.payload.coupon_code || "Applied"})</span>
                       <span>-₹{orderConfirmed.payload.discount_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
@@ -1393,49 +1465,160 @@ export default function CheckoutClient() {
                   ))}
                 </div>
 
-                {/* Promo Code Input */}
+                {/* Promo Codes (Multiple Coupons Stackable) */}
                 <div className="border-t border-slate-100 pt-4 mb-4">
-                  {appliedCoupon ? (
-                    <div className="flex items-center justify-between bg-[#41542f]/10 px-3 py-2 rounded-xl text-xs">
-                      <div className="flex items-center gap-2 text-[#41542f]">
-                        <Tag className="w-3.5 h-3.5" />
-                        <span className="font-bold">{appliedCoupon.code}</span>
-                        <span className="text-slate-600">(-₹{discountAmount.toLocaleString("en-IN")})</span>
+                  {/* Stackable Promo Banner */}
+                  <div className="mb-3 p-3 rounded-2xl bg-gradient-to-br from-amber-50/90 via-emerald-50/60 to-amber-50/40 border border-amber-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-[#41542f] text-white text-[11px] shadow-xs">
+                          🎟️
+                        </span>
+                        <span className="text-xs font-bold text-slate-800 tracking-tight">
+                          Stack Multiple Coupons
+                        </span>
                       </div>
-                      <button
-                        onClick={handleRemoveCoupon}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium underline"
-                      >
-                        Remove
-                      </button>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-200/60">
+                        <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                        Up to 3 Allowed
+                      </span>
                     </div>
-                  ) : (
-                    <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+
+                    <p className="text-[11px] text-slate-600 leading-snug">
+                      {appliedCoupons.length === 0 && (
+                        <>You can combine up to 3 coupons together! Enter your first code below, then stack more for extra savings.</>
+                      )}
+                      {appliedCoupons.length === 1 && (
+                        <span className="text-emerald-700 font-semibold">
+                          🎉 1 coupon applied! Enter another code below to stack extra savings (2 slots remaining).
+                        </span>
+                      )}
+                      {appliedCoupons.length === 2 && (
+                        <span className="text-emerald-700 font-semibold">
+                          🔥 2 coupons stacked! You can add 1 more code to maximize your discount.
+                        </span>
+                      )}
+                      {appliedCoupons.length >= 3 && (
+                        <span className="text-emerald-800 font-semibold">
+                          ⭐ Max 3 coupons stacked! Best possible promo savings unlocked for this order.
+                        </span>
+                      )}
+                    </p>
+
+                    {/* 3 Interactive Slot Badges */}
+                    <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-amber-200/50">
+                      {[0, 1, 2].map((slotIdx) => {
+                        const isFilled = appliedCoupons[slotIdx];
+                        return (
+                          <div
+                            key={slotIdx}
+                            className={`flex items-center justify-center gap-1 py-1 px-1 rounded-lg text-[10px] font-semibold transition-all ${
+                              isFilled
+                                ? "bg-emerald-600 text-white shadow-xs"
+                                : appliedCoupons.length === slotIdx
+                                ? "bg-white text-[#41542f] border border-[#41542f]/40 font-bold shadow-2xs"
+                                : "bg-white/60 text-slate-400 border border-slate-200/50"
+                            }`}
+                          >
+                            {isFilled ? (
+                              <>
+                                <Check className="w-3 h-3 shrink-0" />
+                                <span className="truncate max-w-[50px] font-mono">{isFilled.code}</span>
+                              </>
+                            ) : appliedCoupons.length === slotIdx ? (
+                              <span>Slot {slotIdx + 1} (Enter)</span>
+                            ) : (
+                              <span>Slot {slotIdx + 1}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* List of Applied Coupon Chips */}
+                  {appliedCoupons.length > 0 && (
+                    <div className="space-y-1.5 mb-3">
+                      {couponDiscounts.map((cd, idx) => (
+                        <div
+                          key={cd.code}
+                          className="flex items-center justify-between bg-emerald-50 border border-emerald-200/80 px-2.5 py-1.5 rounded-xl text-xs transition-all animate-fade-in shadow-xs"
+                        >
+                          <div className="flex items-center gap-1.5 text-emerald-800">
+                            <span className="w-4 h-4 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-[10px] font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="font-mono font-bold tracking-wide">{cd.code}</span>
+                            <span className="text-emerald-700 text-[11px] font-medium">({cd.label})</span>
+                            <span className="text-emerald-950 font-bold ml-1">-₹{cd.discount.toLocaleString("en-IN")}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCoupon(cd.code)}
+                            className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-white transition-colors"
+                            title={`Remove ${cd.code}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Promo Input Field (allows up to 3 coupons) */}
+                  {appliedCoupons.length < 3 ? (
+                    <div className="space-y-1.5">
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="Promo code (e.g. WELCOME10)"
+                          placeholder={
+                            appliedCoupons.length === 0
+                              ? "Enter 1st promo code (e.g. WELCOME10)"
+                              : appliedCoupons.length === 1
+                              ? "Enter 2nd code to stack savings..."
+                              : "Enter 3rd & final code..."
+                          }
                           value={couponInput}
                           onChange={(e) => {
                             setCouponInput(e.target.value);
                             setCouponError("");
                           }}
-                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#997b47] uppercase"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleApplyCoupon(e);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#997b47] uppercase font-mono placeholder:font-sans placeholder:normal-case"
                         />
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleApplyCoupon}
                           disabled={couponLoading || !couponInput.trim()}
-                          className="px-4 py-2 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-colors disabled:opacity-50 flex items-center gap-1 shadow-sm"
+                          className="px-4 py-2 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-colors disabled:opacity-50 flex items-center gap-1 shadow-sm whitespace-nowrap"
                         >
                           {couponLoading ? (
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
+                          ) : appliedCoupons.length === 0 ? (
                             "Apply"
+                          ) : (
+                            `+ Stack #${appliedCoupons.length + 1}`
                           )}
                         </button>
                       </div>
                       {couponError && <p className="text-[11px] text-red-500 font-medium">{couponError}</p>}
-                    </form>
+                      <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <span>💡 Tip: Enter each code one by one to combine discounts.</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center">
+                      <p className="text-[11px] text-emerald-800 font-semibold flex items-center justify-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        Maximum 3 promo codes stacked! Best discount active.
+                      </p>
+                    </div>
                   )}
                 </div>
 
@@ -1455,10 +1638,39 @@ export default function CheckoutClient() {
                     </span>
                   </div>
 
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-[#41542f] font-medium">
-                      <span>Discount</span>
-                      <span>-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  {/* First Order 5% Discount Callout */}
+                  {isFirstOrder && firstOrderDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-800 font-medium bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
+                      <span className="flex items-center gap-1.5 font-semibold text-emerald-950">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        First Order Discount (5%)
+                        <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded font-bold uppercase">
+                          Welcome
+                        </span>
+                      </span>
+                      <span className="font-bold text-emerald-800">
+                        -₹{firstOrderDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Individual Coupon Discounts */}
+                  {couponDiscounts.map((cd, idx) => (
+                    <div key={cd.code} className="flex justify-between text-emerald-700 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Tag className="w-3 h-3" /> Coupon #{idx + 1} ({cd.code})
+                      </span>
+                      <span>-₹{cd.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  ))}
+
+                  {appliedCoupons.length > 1 && (
+                    <div className="flex justify-between text-emerald-800 font-bold border-t border-dashed border-emerald-200 pt-1.5 bg-emerald-50/60 p-2 rounded-xl">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        Total Stacked Promo Savings ({appliedCoupons.length} codes)
+                      </span>
+                      <span>-₹{couponTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
 

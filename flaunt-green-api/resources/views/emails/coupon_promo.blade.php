@@ -66,7 +66,11 @@
                 </div>
             </div>
 
-            <a href="http://localhost:3000/collections" class="cta-btn">
+            @php
+                $storeUrl = config('app.frontend_url', env('FRONTEND_URL', 'https://paleturquoise-narwhal-513309.hostingersite.com')) . '/shop';
+            @endphp
+
+            <a href="{{ $storeUrl }}" class="cta-btn">
                 Shop Now &amp; Apply Code
             </a>
         </div>

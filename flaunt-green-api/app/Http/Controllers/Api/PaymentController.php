@@ -14,14 +14,23 @@ use Illuminate\Support\Facades\DB;
 class PaymentController extends Controller
 {
     private $razorpay;
+    private $key;
+    private $secret;
 
     public function __construct()
     {
-        $key = config('services.razorpay.key');
-        $secret = config('services.razorpay.secret');
+        $this->key = config('services.razorpay.key')
+            ?: env('RAZORPAY_KEY')
+            ?: env('RAZORPAY_KEY_ID')
+            ?: 'rzp_test_TZnxa9wE9HqL4W';
 
-        if ($key && $secret) {
-            $this->razorpay = new Api($key, $secret);
+        $this->secret = config('services.razorpay.secret')
+            ?: env('RAZORPAY_SECRET')
+            ?: env('RAZORPAY_KEY_SECRET')
+            ?: 'xYEOMkMZmXNanLnE7UBEoIQo';
+
+        if ($this->key && $this->secret) {
+            $this->razorpay = new Api($this->key, $this->secret);
         }
     }
 
@@ -35,6 +44,8 @@ class PaymentController extends Controller
             'shipping_address' => 'required|string',
             'shipping_cost'    => 'nullable|numeric|min:0',
             'coupon_code'      => 'nullable|string|max:50',
+            'coupon_codes'     => 'nullable|array',
+            'coupon_codes.*'   => 'string',
             'items'            => 'required|array|min:1',
             'items.*.id'       => 'nullable|integer',
             'items.*.name'     => 'required|string',
@@ -65,23 +76,45 @@ class PaymentController extends Controller
             }
         }
 
-        // Server-side coupon verification
+        // ── Server-side Multiple Coupon Stacking Verification ─────────────────
+        $couponCodes = [];
+        if (!empty($validated['coupon_codes']) && is_array($validated['coupon_codes'])) {
+            $couponCodes = $validated['coupon_codes'];
+        } elseif (!empty($validated['coupon_code'])) {
+            $couponCodes = explode(',', $validated['coupon_code']);
+        }
+
+        $cleanCodes = array_slice(array_unique(array_filter(array_map(function($c) {
+            return strtoupper(trim($c));
+        }, $couponCodes))), 0, 3);
+
         $discountAmount = 0;
-        if (!empty($validated['coupon_code'])) {
-            $coupon = \App\Models\Coupon::where('code', strtoupper(trim($validated['coupon_code'])))->first();
+        $validCoupons = [];
+        foreach ($cleanCodes as $code) {
+            $coupon = \App\Models\Coupon::where('code', $code)->first();
             $errorMessage = null;
             if ($coupon && $coupon->isValidFor($serverSubtotal, $errorMessage)) {
-                $discountAmount = $coupon->calculateDiscount($serverSubtotal);
+                $cDiscount = $coupon->calculateDiscount($serverSubtotal);
+                $discountAmount += $cDiscount;
+                $validCoupons[] = $coupon;
             }
         }
 
+        // ── First Order 5% Discount Calculation ──────────────────────────────
+        $user = auth()->user();
+        $isFirstOrder = $user ? (bool)$user->is_first_order : false;
+        $firstOrderDiscount = $isFirstOrder ? (float)round($serverSubtotal * 0.05) : 0;
+
+        // Total discount: Coupon discount + First order 5% discount (capped at subtotal)
+        $totalDiscount = min($serverSubtotal, $discountAmount + $firstOrderDiscount);
+
         $shippingCost = (float)($validated['shipping_cost'] ?? 0);
-        $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $discountAmount);
+        $serverCalculatedTotal = max(0, $serverSubtotal + $shippingCost - $totalDiscount);
 
         // Strict price verification: Tolerance ₹2 (for rounding only, not ₹500)
         $clientAmount = (float) $validated['amount'];
         if (abs($clientAmount - $serverCalculatedTotal) > 2) {
-            Log::error("PaymentController: Price mismatch. Client: {$clientAmount}, Server: {$serverCalculatedTotal} (Subtotal: {$serverSubtotal}, Disc: {$discountAmount}, Ship: {$shippingCost})");
+            Log::error("PaymentController: Price mismatch. Client: {$clientAmount}, Server: {$serverCalculatedTotal} (Subtotal: {$serverSubtotal}, TotalDisc: {$totalDiscount}, FirstOrderDisc: {$firstOrderDiscount}, CouponDisc: {$discountAmount}, Ship: {$shippingCost})");
             return response()->json(['error' => 'Price mismatch. Please refresh your cart and try again.'], 422);
         }
 
@@ -103,6 +136,19 @@ class PaymentController extends Controller
                 }
             }
         }
+
+        $appliedCodesList = !empty($validCoupons)
+            ? implode(', ', array_map(fn($c) => $c->code, $validCoupons))
+            : null;
+
+        $notesParts = [];
+        if ($isFirstOrder && $firstOrderDiscount > 0) {
+            $notesParts[] = "First Order Discount (5%): -₹{$firstOrderDiscount}";
+        }
+        if ($appliedCodesList) {
+            $notesParts[] = "Coupons: [{$appliedCodesList}]";
+        }
+        $orderNotes = !empty($notesParts) ? implode(' | ', $notesParts) : null;
 
         DB::beginTransaction();
         try {
@@ -126,11 +172,14 @@ class PaymentController extends Controller
                 'shipping_name'    => $validated['shipping_name'],
                 'shipping_phone'   => $validated['shipping_phone'],
                 'shipping_address' => $validated['shipping_address'],
-                'subtotal'         => $clientAmount,
-                'total'            => $clientAmount,
+                'subtotal'         => $serverSubtotal,
+                'shipping_cost'    => $shippingCost,
+                'tax'              => 0,
+                'total'            => $serverCalculatedTotal,
                 'status'           => 'pending',
                 'payment_method'   => 'razorpay',
                 'payment_status'   => 'pending',
+                'notes'            => $orderNotes,
             ]);
 
             // Create Order Items
@@ -150,10 +199,11 @@ class PaymentController extends Controller
             DB::commit();
 
             return response()->json([
-                'id'          => $razorpayOrder['id'],
-                'amount'      => $razorpayOrder['amount'],
-                'currency'    => $razorpayOrder['currency'],
-                'db_order_id' => $order->id,
+                'id'           => $razorpayOrder['id'],
+                'amount'       => $razorpayOrder['amount'],
+                'currency'     => $razorpayOrder['currency'],
+                'db_order_id'  => $order->id,
+                'razorpay_key' => $this->key,
             ]);
 
         } catch (\Exception $e) {
@@ -341,6 +391,14 @@ class PaymentController extends Controller
                         $deductQty = min((int)$variant->stock, (int)$item->quantity);
                         $variant->decrement('stock', $deductQty);
                     }
+                }
+            }
+
+            // Atomically increment usage count for each applied coupon
+            if (!empty($lockedOrder->notes) && preg_match('/Coupons:\s*\[(.*?)\]/', $lockedOrder->notes, $matches)) {
+                $appliedCodes = array_filter(array_map('trim', explode(',', $matches[1])));
+                foreach ($appliedCodes as $cCode) {
+                    \App\Models\Coupon::where('code', strtoupper($cCode))->increment('used_count');
                 }
             }
         });

@@ -13,9 +13,23 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'collection', 'primaryImage', 'variants'])->get();
+        $query = Product::with(['category', 'collection', 'primaryImage', 'variants']);
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('slug', 'like', "%{$search}%")
+                  ->orWhereHas('variants', function ($vq) use ($search) {
+                      $vq->where('sku', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $products = $query->latest()->get();
         return response()->json($products);
     }
 
@@ -74,11 +88,25 @@ class ProductController extends Controller
             'variants.*.size' => 'required|string|max:255',
             'variants.*.color_name' => 'nullable|string|max:255',
             'variants.*.color_hex' => 'nullable|string|max:255',
+            'variants.*.image' => 'nullable',
             'variants.*.stock' => 'required|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'file|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
+
+        // Auto-generate SKU if not provided
+        if (empty($validated['sku'])) {
+            $cleanName = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 4)) ?: 'PRD';
+            do {
+                $generatedSku = 'FG-' . $cleanName . '-' . strtoupper(Str::random(4));
+            } while (Product::where('sku', $generatedSku)->exists());
+            $validated['sku'] = $generatedSku;
+        } else {
+            $validated['sku'] = strtoupper(trim($validated['sku']));
+        }
 
         DB::beginTransaction();
         try {
@@ -98,7 +126,7 @@ class ProductController extends Controller
 
             $product = Product::create($validated);
 
-            // Handle images (enforce maximum 5 images)
+            // Handle images (allow up to 5 product gallery images for equal height frontend layout)
             if ($request->hasFile('images')) {
                 $imageFiles = array_slice($request->file('images'), 0, 5);
                 foreach ($imageFiles as $index => $file) {
@@ -112,8 +140,11 @@ class ProductController extends Controller
                 }
             }
 
-            // Handle variants
-            foreach ($variants as $variantData) {
+            // Handle variants with optional fabric texture images
+            foreach ($variants as $index => $variantData) {
+                if ($request->hasFile("variant_image_{$index}")) {
+                    $variantData['image'] = $request->file("variant_image_{$index}")->store('variants', 'public');
+                }
                 $product->variants()->create($variantData);
             }
 
@@ -189,6 +220,7 @@ class ProductController extends Controller
             'variants.*.size' => 'required_with:variants|string|max:255',
             'variants.*.color_name' => 'nullable|string|max:255',
             'variants.*.color_hex' => 'nullable|string|max:255',
+            'variants.*.image' => 'nullable',
             'variants.*.stock' => 'required_with:variants|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255',
             'deleted_images' => 'nullable|array',
@@ -199,6 +231,19 @@ class ProductController extends Controller
 
         if (isset($validated['name']) && $validated['name'] !== $product->name) {
             $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
+        }
+
+        // Auto-generate SKU if currently empty
+        if (isset($validated['sku'])) {
+            if (empty($validated['sku']) && empty($product->sku)) {
+                $cleanName = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name'] ?? $product->name), 0, 4)) ?: 'PRD';
+                do {
+                    $generatedSku = 'FG-' . $cleanName . '-' . strtoupper(Str::random(4));
+                } while (Product::where('sku', $generatedSku)->exists());
+                $validated['sku'] = $generatedSku;
+            } else {
+                $validated['sku'] = strtoupper(trim($validated['sku']));
+            }
         }
 
         DB::beginTransaction();
@@ -224,9 +269,15 @@ class ProductController extends Controller
                 $product->variants()->whereIn('id', $validated['deleted_variants'])->delete();
             }
 
-            // Handle updated/new variants
+            // Handle updated/new variants with fabric texture images
             if (isset($validated['variants'])) {
-                foreach ($validated['variants'] as $variantData) {
+                foreach ($validated['variants'] as $index => $variantData) {
+                    if ($request->hasFile("variant_image_{$index}")) {
+                        $variantData['image'] = $request->file("variant_image_{$index}")->store('variants', 'public');
+                    } elseif ($request->boolean("variant_remove_image_{$index}")) {
+                        $variantData['image'] = null;
+                    }
+
                     if (isset($variantData['id'])) {
                         $product->variants()->where('id', $variantData['id'])->update($variantData);
                     } else {

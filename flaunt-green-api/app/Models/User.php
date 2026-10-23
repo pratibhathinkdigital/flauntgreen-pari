@@ -55,6 +55,33 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Appended attributes for JSON serialization.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'is_first_order',
+    ];
+
+    /**
+     * Check if this user is placing their first order (0 previous non-cancelled or paid orders).
+     */
+    public function getIsFirstOrderAttribute(): bool
+    {
+        $hasCompletedOrders = $this->orders()
+            ->where(function ($query) {
+                $query->where('payment_status', 'paid')
+                      ->orWhere(function ($q) {
+                          $q->where('payment_method', 'cod')
+                            ->where('status', '!=', 'cancelled');
+                      });
+            })
+            ->exists();
+
+        return !$hasCompletedOrders;
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

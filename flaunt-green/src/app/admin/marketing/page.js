@@ -39,6 +39,17 @@ export default function AdminMarketingPage() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [activeCouponForEmail, setActiveCouponForEmail] = useState(null);
 
+  // Multi-coupon sending state
+  const [selectedCouponIds, setSelectedCouponIds] = useState([]);
+  const [isMultiSendModalOpen, setIsMultiSendModalOpen] = useState(false);
+  const [multiEmailForm, setMultiEmailForm] = useState({
+    customer_name: "",
+    customer_email: "",
+    custom_message: "Enjoy these exclusive discounts on your next purchase at Flaunt Green! You can stack multiple promo codes during checkout.",
+  });
+  const [multiSelectedCouponIds, setMultiSelectedCouponIds] = useState([]);
+  const [sendingMultiEmail, setSendingMultiEmail] = useState(false);
+
   // Create Form State
   const [formData, setFormData] = useState({
     code: "",
@@ -197,6 +208,112 @@ export default function AdminMarketingPage() {
     }
   };
 
+  // Helper: Check if a coupon is currently active, unexpired, and within usage limits
+  const isCouponValidAndActive = (c) => {
+    if (!c.is_active) return false;
+    if (c.expires_at) {
+      const exp = new Date(c.expires_at);
+      if (typeof c.expires_at === "string" && c.expires_at.length <= 10) {
+        exp.setHours(23, 59, 59, 999);
+      }
+      if (exp.getTime() < Date.now()) return false;
+    }
+    if (c.usage_limit && Number(c.used_count) >= Number(c.usage_limit)) return false;
+    return true;
+  };
+
+  // Multi-coupon Selection Helpers
+  const toggleSelectCoupon = (id) => {
+    setSelectedCouponIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    const validVisible = paginatedCoupons.filter(isCouponValidAndActive);
+    const visibleIds = validVisible.map((c) => c.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedCouponIds.includes(id));
+    if (allSelected) {
+      setSelectedCouponIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      setSelectedCouponIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const openMultiSendModal = (preselected = []) => {
+    const validCoupons = coupons.filter(isCouponValidAndActive);
+    let initialIds = [];
+    if (preselected && preselected.length > 0) {
+      initialIds = preselected.filter((id) => validCoupons.some((c) => c.id === id));
+    } else if (selectedCouponIds.length > 0) {
+      initialIds = selectedCouponIds.filter((id) => validCoupons.some((c) => c.id === id));
+    } else {
+      initialIds = validCoupons.slice(0, 2).map((c) => c.id);
+    }
+
+    setMultiSelectedCouponIds(initialIds);
+    setMultiEmailForm({
+      customer_name: "",
+      customer_email: "",
+      custom_message: "Enjoy these exclusive discounts on your next purchase at Flaunt Green! You can stack multiple promo codes during checkout.",
+    });
+    setIsMultiSendModalOpen(true);
+  };
+
+  const toggleMultiModalCoupon = (id) => {
+    setMultiSelectedCouponIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectCustomerForMulti = (e) => {
+    const userId = e.target.value;
+    if (!userId) return;
+    const user = registeredUsers.find((u) => String(u.id) === String(userId));
+    if (user) {
+      setMultiEmailForm((prev) => ({
+        ...prev,
+        customer_name: user.name || "",
+        customer_email: user.email || "",
+      }));
+    }
+  };
+
+  const handleSendMultiEmail = async (e) => {
+    e.preventDefault();
+    if (!multiEmailForm.customer_email || !multiEmailForm.customer_name) {
+      toast.error("Please provide both customer name and email address.");
+      return;
+    }
+
+    if (!multiSelectedCouponIds || multiSelectedCouponIds.length === 0) {
+      toast.error("Please select at least one coupon to send.");
+      return;
+    }
+
+    setSendingMultiEmail(true);
+    try {
+      const res = await couponsApi.adminSendMultipleEmail({
+        coupon_ids: multiSelectedCouponIds,
+        customer_name: multiEmailForm.customer_name,
+        customer_email: multiEmailForm.customer_email,
+        custom_message: multiEmailForm.custom_message,
+      });
+
+      if (res.data?.success) {
+        toast.success(res.data.message || "Promo codes sent successfully!");
+        setIsMultiSendModalOpen(false);
+        setSelectedCouponIds([]);
+      } else {
+        toast.error(res.data?.message || "Failed to send coupons.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to dispatch multiple coupons email.");
+    } finally {
+      setSendingMultiEmail(false);
+    }
+  };
+
   const filtered = coupons.filter((c) => {
     const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
     let statusMatch = true;
@@ -231,13 +348,26 @@ export default function AdminMarketingPage() {
             Create dynamic discount coupons, manage promotions, and directly email promo codes to your customers.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchCoupons}
             className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
             title="Refresh coupons"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+          <button
+            onClick={() => openMultiSendModal(selectedCouponIds)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 text-[#997b47] hover:bg-amber-100 border border-amber-200 text-xs font-semibold transition-all shadow-xs"
+            title="Share multiple coupons to a customer in one email"
+          >
+            <Gift className="w-4 h-4" />
+            <span>Share Multiple Coupons</span>
+            {selectedCouponIds.length > 0 && (
+              <span className="bg-[#997b47] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {selectedCouponIds.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -247,6 +377,32 @@ export default function AdminMarketingPage() {
           </button>
         </div>
       </div>
+
+      {/* Selected Action Bar */}
+      {selectedCouponIds.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200/80 px-4 py-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-xs">
+          <div className="flex items-center gap-2.5 text-xs text-amber-900 font-medium">
+            <CheckCircle className="w-4 h-4 text-[#997b47] shrink-0" />
+            <span>
+              <strong>{selectedCouponIds.length}</strong> coupon{selectedCouponIds.length > 1 ? "s" : ""} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setSelectedCouponIds([])}
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-1"
+            >
+              Deselect All
+            </button>
+            <button
+              onClick={() => openMultiSendModal(selectedCouponIds)}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-all shadow-xs"
+            >
+              <Send className="w-3.5 h-3.5" /> Send {selectedCouponIds.length} Selected to Customer
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-soft-sm p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -324,18 +480,48 @@ export default function AdminMarketingPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
+            {/* Table header bar with Select All */}
+            <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+              <label className="flex items-center gap-2 cursor-pointer hover:text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={
+                    paginatedCoupons.filter(isCouponValidAndActive).length > 0 &&
+                    paginatedCoupons
+                      .filter(isCouponValidAndActive)
+                      .every((c) => selectedCouponIds.includes(c.id))
+                  }
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300"
+                />
+                <span>Select Active Coupons ({paginatedCoupons.filter(isCouponValidAndActive).length})</span>
+              </label>
+              <span>{filtered.length} total coupons</span>
+            </div>
+
             {paginatedCoupons.map((c) => {
               const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+              const isSelected = selectedCouponIds.includes(c.id);
               const discountDisplay =
                 c.type === "percent" ? `${c.value}% OFF` : `₹${Number(c.value).toLocaleString("en-IN")} OFF`;
 
               return (
                 <div
                   key={c.id}
-                  className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors"
+                  className={`p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
+                    isSelected ? "bg-amber-50/40" : "hover:bg-slate-50/50"
+                  }`}
                 >
-                  {/* Left: Code badge and description */}
+                  {/* Left: Checkbox, Code badge and description */}
                   <div className="flex items-start sm:items-center gap-3.5">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={isExpired || !c.is_active}
+                      onChange={() => toggleSelectCoupon(c.id)}
+                      className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300 mt-1 sm:mt-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={isExpired ? "Expired coupon cannot be selected" : !c.is_active ? "Inactive coupon" : ""}
+                    />
                     <div className="flex flex-col items-start gap-1">
                       <span className="font-mono font-bold text-sm tracking-wider px-3.5 py-1.5 rounded-xl bg-[#41542f]/10 text-[#41542f] border border-[#41542f]/20 shadow-xs">
                         {c.code}
@@ -383,13 +569,24 @@ export default function AdminMarketingPage() {
                     </div>
 
                     {/* Send Code via Email Button */}
-                    <button
-                      onClick={() => openSendModal(c)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-[#997b47] hover:bg-amber-100 border border-amber-200 text-xs font-semibold transition-all shadow-xs"
-                      title="Send this code to customer via email"
-                    >
-                      <Send className="w-3.5 h-3.5" /> Send to Customer
-                    </button>
+                    {isExpired || !c.is_active ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed opacity-60"
+                        title={isExpired ? "Expired coupon cannot be sent" : "Inactive coupon"}
+                      >
+                        <Send className="w-3.5 h-3.5" /> Send to Customer
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openSendModal(c)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-[#997b47] hover:bg-amber-100 border border-amber-200 text-xs font-semibold transition-all shadow-xs"
+                        title="Send this code to customer via email"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Send to Customer
+                      </button>
+                    )}
 
                     {/* Delete Button */}
                     <button
@@ -701,6 +898,187 @@ export default function AdminMarketingPage() {
                     <>
                       <Send className="w-3.5 h-3.5" />
                       <span>Send Promo Code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Share Multiple Coupons with Customer */}
+      {isMultiSendModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <Gift className="w-5 h-5 text-[#997b47]" />
+                <h3 className="font-heading font-bold text-lg text-slate-900">
+                  Share Multiple Coupons via Email
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsMultiSendModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendMultiEmail} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Quick Select Registered User */}
+              {registeredUsers.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                    Quick Select Customer (Autofill)
+                  </label>
+                  <select
+                    onChange={handleSelectCustomerForMulti}
+                    defaultValue=""
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#41542f] bg-slate-50"
+                  >
+                    <option value="" disabled>-- Pick from registered customers or enter manually --</option>
+                    {registeredUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                    Customer Name *
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Pari Sharma"
+                      value={multiEmailForm.customer_name}
+                      onChange={(e) => setMultiEmailForm({ ...multiEmailForm, customer_name: e.target.value })}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                    Customer Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. customer@example.com"
+                      value={multiEmailForm.customer_email}
+                      onChange={(e) => setMultiEmailForm({ ...multiEmailForm, customer_email: e.target.value })}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Select Coupons to Send */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                    Select Coupons to Include ({multiSelectedCouponIds.length} Selected) *
+                  </label>
+                  <span className="text-[11px] text-[#41542f] font-semibold">
+                    Active &amp; unexpired coupons only
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-52 overflow-y-auto bg-slate-50/30 p-1">
+                  {coupons.filter(isCouponValidAndActive).length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-500 font-medium">
+                      No active or unexpired coupons available to share.
+                    </div>
+                  ) : (
+                    coupons
+                      .filter(isCouponValidAndActive)
+                      .map((c) => {
+                        const isSelected = multiSelectedCouponIds.includes(c.id);
+                        const discountStr = c.type === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`;
+                        return (
+                          <label
+                            key={c.id}
+                            className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${
+                              isSelected ? "bg-emerald-50/80 border border-emerald-200" : "hover:bg-slate-100/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleMultiModalCoupon(c.id)}
+                                className="w-4 h-4 rounded text-[#41542f] focus:ring-[#41542f] border-slate-300"
+                              />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-xs text-[#41542f] bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {c.code}
+                                  </span>
+                                  <span className="font-bold text-xs text-slate-800">{discountStr}</span>
+                                </div>
+                                {c.min_spend > 0 && (
+                                  <p className="text-[10px] text-slate-500 mt-0.5">Min spend: ₹{c.min_spend}</p>
+                                )}
+                              </div>
+                            </div>
+                            {c.expires_at && (
+                              <span className="text-[10px] text-slate-400">
+                                Exp: {new Date(c.expires_at).toLocaleDateString("en-IN")}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Personalized Message for Customer
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Add a friendly note for the customer..."
+                  value={multiEmailForm.custom_message}
+                  onChange={(e) => setMultiEmailForm({ ...multiEmailForm, custom_message: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#41542f] focus:ring-1 focus:ring-[#41542f]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsMultiSendModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingMultiEmail || multiSelectedCouponIds.length === 0}
+                  className="px-6 py-2.5 rounded-xl bg-[#41542f] text-white text-xs font-semibold hover:bg-[#344325] transition-all shadow-soft-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingMultiEmail ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending {multiSelectedCouponIds.length} Coupons...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send {multiSelectedCouponIds.length} Coupon(s) to Customer</span>
                     </>
                   )}
                 </button>

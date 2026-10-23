@@ -178,6 +178,16 @@ export default function CartDrawer({ isOpen, onClose }) {
                 {formatPrice(totalPrice())}
               </span>
             </div>
+            {useAuthStore.getState().user?.is_first_order && (
+              <div className="flex items-center justify-between text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200/80 font-medium">
+                <span className="flex items-center gap-1">
+                  <span>✨</span> First Order 5% OFF
+                </span>
+                <span className="font-bold">
+                  -{formatPrice(Math.round(totalPrice() * 0.05))}
+                </span>
+              </div>
+            )}
             <p className="text-xs text-text-muted">Shipping calculated at checkout</p>
             <button
               onClick={handleCheckout}
