@@ -27,7 +27,7 @@ const slides = [
 
 export default function DogTogsHero() {
   return (
-    <section className="relative w-full h-[85vh] min-h-[500px] overflow-hidden group">
+    <section className="relative w-full h-[clamp(360px,52vh,480px)] sm:h-[85vh] sm:min-h-[500px] overflow-hidden group">
       <Swiper
         modules={[Autoplay, EffectFade, Navigation, Pagination]}
         effect="fade"
@@ -47,8 +47,8 @@ export default function DogTogsHero() {
         {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="relative w-full h-full">
             <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.image})` }}
+              className="absolute inset-0 bg-cover dogtogs-hero-img"
+              style={{ backgroundImage: `url(${slide.image})`, "--dogtogs-focus-x": "90%" }}
             />
             <div
               className="absolute inset-y-0 left-0 w-full sm:w-[55%] lg:w-[46%] flex items-center z-10"

@@ -762,3 +762,16 @@
     object-position: var(--hero-focus-x, 50%) 50%;
   }
 }
+
+/* =============================================
+   DOGTOGS HERO — show right side on mobile like home
+   ============================================= */
+.dogtogs-hero-img {
+  background-position: 50% 50%;
+}
+
+@media (max-width: 639px) {
+  .dogtogs-hero-img {
+    background-position: var(--dogtogs-focus-x, 90%) 50%;
+  }
+}
