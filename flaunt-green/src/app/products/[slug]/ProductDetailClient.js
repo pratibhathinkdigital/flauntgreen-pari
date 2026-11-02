@@ -858,9 +858,32 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
       if (!slug) return;
       try {
         const cleanSlug = encodeURIComponent(String(slug).trim());
-        const res = await productsApi.getOne(cleanSlug);
-        if (res.data) {
-          setApiProduct(res.data.data || res.data);
+        let productData = null;
+        try {
+          const res = await productsApi.getOne(cleanSlug);
+          if (res.data) {
+            productData = res.data.data || res.data;
+          }
+        } catch (err) {
+          // Fallback: in case DB slug has generated suffix (e.g. skippers-shirt-6ae866855352d)
+          const searchTerm = String(slug).replace(/-/g, " ").trim();
+          const searchRes = await productsApi.getAll({ search: searchTerm });
+          if (searchRes.data && Array.isArray(searchRes.data) && searchRes.data.length > 0) {
+            const rawSlug = String(slug).trim().toLowerCase();
+            const match =
+              searchRes.data.find(
+                (p) =>
+                  p.slug === rawSlug ||
+                  p.slug?.toLowerCase().startsWith(rawSlug + "-") ||
+                  p.name?.toLowerCase() === searchTerm.toLowerCase()
+              ) || searchRes.data[0];
+            if (match) {
+              productData = match;
+            }
+          }
+        }
+        if (productData) {
+          setApiProduct(productData);
         }
       } catch (e) {
         // fallback to static

@@ -83,6 +83,7 @@ class ProductController extends Controller
         $product = Product::with(['category', 'collection', 'images', 'variants'])
             ->where(function ($q) use ($slug) {
                 $q->where('slug', $slug)
+                  ->orWhere('slug', 'like', $slug . '-%')
                   ->orWhere('id', $slug);
             })
             ->firstOrFail();
