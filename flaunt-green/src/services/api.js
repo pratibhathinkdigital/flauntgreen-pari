@@ -9,6 +9,7 @@ export const productsApi = {
   search: (query)  => api.get(`/products?search=${query}`),
   // Admin endpoints
   adminGetAll: (params) => api.get("/admin/products", { params }),
+  adminGetOne: (id)     => api.get(`/admin/products/${id}`),
   create: (data)   => api.post("/admin/products", data, {
     headers: { 'Content-Type': 'multipart/form-data' } // Important for image uploads
   }),

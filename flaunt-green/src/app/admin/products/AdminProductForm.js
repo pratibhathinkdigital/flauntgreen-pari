@@ -67,7 +67,24 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
 
   useEffect(() => {
     fetchDropdowns();
-  }, []);
+    if (product?.id) {
+      productsApi.adminGetOne(product.id)
+        .then((res) => {
+          const fresh = res.data?.data || res.data;
+          if (fresh) {
+            if (fresh.images && Array.isArray(fresh.images)) {
+              setExistingImages(fresh.images);
+            }
+            if (fresh.variants && Array.isArray(fresh.variants) && fresh.variants.length > 0) {
+              setVariants(fresh.variants);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not fetch fresh product details:", err);
+        });
+    }
+  }, [product?.id]);
 
   const fetchDropdowns = async () => {
     try {

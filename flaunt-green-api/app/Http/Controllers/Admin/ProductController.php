@@ -15,7 +15,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'collection', 'primaryImage', 'variants']);
+        $query = Product::with(['category', 'collection', 'primaryImage', 'images', 'variants']);
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
