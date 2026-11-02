@@ -15,6 +15,7 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import ProductReviewsSection from "@/components/shop/ProductReviewsSection";
 import { getInventoryForSlug } from "@/data/inventory";
+import { PRODUCT_NAMES } from "@/data/productNames";
 import {
   Leaf,
   Truck,
@@ -894,7 +895,52 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
     fetchProduct();
   }, [slug]);
 
-  // Build product from API
+  // Fallback catalogue for static/unseeded pieces like Dog Togs
+  const DOG_TOGS_FALLBACK = {
+    "sailors-shirt": {
+      name: "Sailor's Shirt",
+      price: 3205,
+      image: "/assets/dogtogs/ss.png",
+      fabric: "Breathable Hemp Blend",
+      fit: "Regular Fit",
+      colour: "Ocean Blue / White",
+      description: "Designed for breezy comfort and active playtime for adventurous pups. Handcrafted from eco-friendly sustainable hemp blend.",
+      sizes: ["XS", "S", "M", "L", "XL"],
+    },
+    "hatch-coat": {
+      name: "Hatch Coat",
+      price: 3404,
+      image: "/assets/dogtogs/hc.png",
+      fabric: "Organic Hemp Cotton",
+      fit: "Comfort Fit",
+      colour: "Coastal Ochre",
+      description: "A cozy, durable coat crafted with soft organic lining to keep your companion warm and stylish.",
+      sizes: ["XS", "S", "M", "L", "XL"],
+    },
+    "high-tide-coat": {
+      name: "High Tide Coat",
+      price: 4069,
+      image: "/assets/dogtogs/htc.png",
+      fabric: "Premium Hemp Blend",
+      fit: "Weather Guard Fit",
+      colour: "Deep Navy Blue",
+      description: "Rugged and protective dog outerwear designed to withstand breezy seaside outings in timeless style.",
+      sizes: ["XS", "S", "M", "L", "XL"],
+    },
+  };
+
+  const fallbackInfo = DOG_TOGS_FALLBACK[slug] || (PRODUCT_NAMES[slug] ? {
+    name: PRODUCT_NAMES[slug],
+    price: 2999,
+    image: "/placeholder.png",
+    fabric: "100% Certified Organic Fabric",
+    fit: "Relaxed Fit",
+    colour: "Natural",
+    description: "A sustainably crafted piece from our conscious slow-fashion collection.",
+    sizes: ["S", "M", "L", "XL"],
+  } : null);
+
+  // Build product from API (or fallback if not yet uploaded in admin)
   const product = apiProduct ? {
     name: apiProduct.name,
     collection: apiProduct.collection?.name || "Flaunt Green",
@@ -942,6 +988,32 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
     // Store variants for inventory lookups
     _variants: apiProduct.variants || [],
     _id: apiProduct.id,
+  } : fallbackInfo ? {
+    name: fallbackInfo.name,
+    collection: "Dog Togs",
+    price: Number(fallbackInfo.price),
+    description: fallbackInfo.description,
+    details: {
+      size: "M",
+      measurements: "",
+      fabric: fallbackInfo.fabric,
+      colour: fallbackInfo.colour,
+      fit: fallbackInfo.fit,
+      sku: `FG-${String(slug || "").toUpperCase().slice(0, 8)}`,
+    },
+    model: { text: "Regular fit", size: "M" },
+    colors: [{ name: fallbackInfo.colour || "Default", value: "#2B4C7E", image: null }],
+    sizes: fallbackInfo.sizes || ["XS", "S", "M", "L", "XL"],
+    images: [fallbackInfo.image || "/placeholder.png"],
+    washCare: ["Hand Wash Separately", "Do Not Bleach", "Dry in Shade", "Warm Iron"],
+    materials: "100% Certified Sustainable Fabric, handcrafted with care.",
+    shipping: "Free Shipping across India! Dispatched in 5-7 business days.",
+    returns: "Conscious slow-fashion model.",
+    styleWith: [],
+    similar: [],
+    relatedCategories: [],
+    _variants: (fallbackInfo.sizes || ["XS", "S", "M", "L", "XL"]).map(sz => ({ size: sz, stock: 3 })),
+    _id: slug,
   } : null;
 
   const [selectedColor, setSelectedColor] = useState(0);
