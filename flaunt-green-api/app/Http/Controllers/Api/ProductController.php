@@ -81,8 +81,10 @@ class ProductController extends Controller
     public function show($slug)
     {
         $product = Product::with(['category', 'collection', 'images', 'variants'])
-            ->where('slug', $slug)
-            ->where('is_active', true)
+            ->where(function ($q) use ($slug) {
+                $q->where('slug', $slug)
+                  ->orWhere('id', $slug);
+            })
             ->firstOrFail();
             
         // Map similar products and style with products from slugs to objects with images

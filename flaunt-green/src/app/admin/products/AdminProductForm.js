@@ -742,7 +742,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                       key={index}
                       className="p-3.5 bg-stone-50/70 border border-stone-200 rounded-2xl space-y-2 hover:bg-white transition-all shadow-2xs"
                     >
-                      <div className="grid grid-cols-12 gap-3 items-end">
+                      <div className="grid grid-cols-12 gap-2.5 items-end">
                         {/* Size */}
                         <div className="col-span-4 sm:col-span-2 space-y-1">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600">
@@ -754,7 +754,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                             onChange={(e) => handleVariantChange(index, "size", e.target.value)}
                             required
                             placeholder="e.g. M"
-                            className="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-bold text-center outline-none bg-white focus:border-[#41542f]"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 text-xs font-bold text-center outline-none bg-white focus:border-[#41542f]"
                           />
                         </div>
 
@@ -777,7 +777,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                             required
                             min="0"
                             placeholder="0"
-                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-bold text-center outline-none bg-white ${
+                            className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-bold text-center outline-none bg-white ${
                               isOutOfStock
                                 ? "border-red-300 text-red-600"
                                 : "border-stone-200 text-emerald-800"
@@ -785,8 +785,23 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                           />
                         </div>
 
+                        {/* Variant SKU */}
+                        <div className="col-span-4 sm:col-span-2 space-y-1">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600 flex items-center justify-between">
+                            <span>SKU</span>
+                            <span className="text-[9px] text-stone-400 font-normal">Variant</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={v.sku || ""}
+                            onChange={(e) => handleVariantChange(index, "sku", e.target.value.toUpperCase())}
+                            placeholder={formData.sku ? `${formData.sku}-${v.size || "SZ"}` : "e.g. FG-SZ-01"}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 text-xs font-mono font-medium outline-none bg-white focus:border-[#41542f] text-stone-800 placeholder:text-stone-300"
+                          />
+                        </div>
+
                         {/* Color / Fabric Variation Name */}
-                        <div className="col-span-4 sm:col-span-3 space-y-1">
+                        <div className="col-span-6 sm:col-span-3 space-y-1">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600">
                             Colour / Variant
                           </label>
@@ -797,20 +812,20 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                               handleVariantChange(index, "color_name", e.target.value)
                             }
                             placeholder="e.g. Olive Khadi"
-                            className="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs outline-none bg-white focus:border-[#41542f]"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-stone-200 text-xs outline-none bg-white focus:border-[#41542f]"
                           />
                         </div>
 
                         {/* Fabric Texture Image */}
-                        <div className="col-span-9 sm:col-span-4 space-y-1">
+                        <div className="col-span-4 sm:col-span-2 space-y-1">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600 flex items-center justify-between">
-                            <span>Fabric Texture</span>
-                            <span className="text-[10px] text-stone-400 font-normal">Swatch</span>
+                            <span>Swatch</span>
+                            <span className="text-[9px] text-stone-400 font-normal">Texture</span>
                           </label>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {v.imageFile || (v.image && !v.remove_image) ? (
-                              <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-stone-300 shrink-0 bg-stone-100 group shadow-xs">
+                              <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-stone-300 shrink-0 bg-stone-100 group shadow-xs">
                                 <img
                                   src={
                                     v.imageFile
@@ -834,14 +849,14 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                               </div>
                             ) : null}
 
-                            <label className="flex-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 text-[11px] font-medium text-stone-600 hover:bg-white hover:border-[#997b47] cursor-pointer transition-all bg-white shadow-2xs truncate">
+                            <label className="flex-1 min-w-0 inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-stone-200 text-[10px] font-medium text-stone-600 hover:bg-white hover:border-[#997b47] cursor-pointer transition-all bg-white shadow-2xs truncate">
                               <Upload className="w-3 h-3 text-[#997b47] shrink-0" />
                               <span className="truncate">
                                 {v.imageFile
                                   ? v.imageFile.name
                                   : v.image && !v.remove_image
-                                  ? "Replace Swatch"
-                                  : "Upload Swatch"}
+                                  ? "Replace"
+                                  : "Upload"}
                               </span>
                               <input
                                 type="file"
@@ -859,14 +874,14 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                         </div>
 
                         {/* Actions (Duplicate & Delete) */}
-                        <div className="col-span-3 sm:col-span-1 flex items-center justify-end gap-1">
+                        <div className="col-span-2 sm:col-span-1 flex items-center justify-end gap-0.5">
                           <button
                             type="button"
                             onClick={() => handleDuplicateVariant(index)}
                             className="p-1.5 text-stone-400 hover:text-[#997b47] hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
                             title="Duplicate this size"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
@@ -874,7 +889,7 @@ export default function AdminProductForm({ product = null, onClose, onSuccess })
                             className="p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                             title="Delete size"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>

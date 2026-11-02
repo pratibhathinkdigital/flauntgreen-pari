@@ -970,13 +970,23 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
 
   const breadcrumbPath = path || propBreadcrumbPath || (product ? "her/topwear" : "");
 
+  // Dynamically select the first available in-stock size when product loads
+  useEffect(() => {
+    if (apiProduct && apiProduct.variants && apiProduct.variants.length > 0) {
+      const inStock = apiProduct.variants.find((v) => Number(v.stock) > 0) || apiProduct.variants[0];
+      if (inStock && inStock.size) {
+        setSelectedSize(inStock.size);
+      }
+    }
+  }, [apiProduct]);
+
   // Build inventory from API variants or static
   const inventory = product ? (() => {
-    if (apiProduct && apiProduct.variants) {
+    if (apiProduct && apiProduct.variants && apiProduct.variants.length > 0) {
       const inv = {};
       apiProduct.variants.forEach(v => {
         if (v.size) {
-          inv[v.size] = (inv[v.size] || 0) + (v.stock || 0);
+          inv[v.size] = (inv[v.size] || 0) + (Number(v.stock) || 0);
         }
       });
       return inv;
@@ -984,7 +994,7 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
     return getInventoryForSlug(slug, product.sizes);
   })() : {};
 
-  const selectedVariant = (apiProduct && apiProduct.variants) ? (
+  const selectedVariant = (apiProduct && apiProduct.variants && apiProduct.variants.length > 0) ? (
     apiProduct.variants.find(v => 
       v.size === selectedSize && (v.color_name === product?.colors?.[selectedColor]?.name || !v.color_name)
     ) || apiProduct.variants.find(v => v.size === selectedSize)
@@ -992,8 +1002,8 @@ export default function ProductDetailClient({ slug, breadcrumbPath: propBreadcru
   ) : null;
 
   const stockForSize = selectedVariant 
-    ? (selectedVariant.stock ?? 0)
-    : (inventory[selectedSize] ?? 0);
+    ? (Number(selectedVariant.stock) ?? 0)
+    : (Number(inventory[selectedSize]) ?? 0);
 
   const maxQty = Math.max(1, stockForSize > 0 ? stockForSize : 1);
 

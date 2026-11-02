@@ -145,6 +145,11 @@ class ProductController extends Controller
                 if ($request->hasFile("variant_image_{$index}")) {
                     $variantData['image'] = $request->file("variant_image_{$index}")->store('variants', 'public');
                 }
+                if (empty($variantData['sku']) && !empty($product->sku)) {
+                    $variantData['sku'] = strtoupper($product->sku . '-' . ($variantData['size'] ?? ($index + 1)));
+                } elseif (!empty($variantData['sku'])) {
+                    $variantData['sku'] = strtoupper(trim($variantData['sku']));
+                }
                 $product->variants()->create($variantData);
             }
 
@@ -278,8 +283,20 @@ class ProductController extends Controller
                         $variantData['image'] = null;
                     }
 
-                    if (isset($variantData['id'])) {
-                        $product->variants()->where('id', $variantData['id'])->update($variantData);
+                    // Auto-fill SKU if empty, otherwise uppercase
+                    if (empty($variantData['sku']) && !empty($product->sku)) {
+                        $variantData['sku'] = strtoupper($product->sku . '-' . ($variantData['size'] ?? ($index + 1)));
+                    } elseif (!empty($variantData['sku'])) {
+                        $variantData['sku'] = strtoupper(trim($variantData['sku']));
+                    }
+
+                    if (!empty($variantData['id'])) {
+                        $variantModel = $product->variants()->where('id', $variantData['id'])->first();
+                        if ($variantModel) {
+                            $variantModel->update($variantData);
+                        } else {
+                            $product->variants()->create($variantData);
+                        }
                     } else {
                         $product->variants()->create($variantData);
                     }
