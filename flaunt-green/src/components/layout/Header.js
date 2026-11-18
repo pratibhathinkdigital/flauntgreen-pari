@@ -103,7 +103,7 @@ function Chevron({ className = "" }) {
   );
 }
 
-export default function Header() {
+export default function Header({ showSpacer = true, className = "" }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -141,7 +141,7 @@ export default function Header() {
 
   return (
     <>
-      <div className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${className}`}>
         <AnnouncementBar />
         <header
           className={`w-full transition-all duration-300 ${scrolled
@@ -649,7 +649,7 @@ export default function Header() {
       </div>
 
       {/* Spacer for fixed header */}
-      <div className="h-[90px] sm:h-[104px] lg:h-[100px]" />
+      {showSpacer && <div className="h-[90px] sm:h-[104px] lg:h-[100px]" />}
 
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
