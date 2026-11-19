@@ -18,8 +18,9 @@ const FRAME_PATH = "/Webp-frames/Sequence 01";
 const FRAME_EXT = ".webp";
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PRELOAD_AHEAD = 24;
-const PRELOAD_BEHIND = 6;
+// High preloading buffer to eliminate stuttering during fast/continuous scroll
+const PRELOAD_AHEAD = 60;
+const PRELOAD_BEHIND = 20;
 
 function padFrameNumber(num) {
   return num.toString().padStart(4, "0");
@@ -39,36 +40,61 @@ function ScrollVideo() {
     const canvas = canvasRef.current;
     if (!wrapper || !container || !canvas) return;
 
-    const glCtx = canvas.getContext("2d");
+    const glCtx = canvas.getContext("2d", { alpha: false });
     if (!glCtx) return;
 
+    // Cache settings
+    const MAX_CACHE_SIZE = 180;
     const imageCache = new Map();
     const pendingLoads = new Set();
-    let currentFrame = -1;
+    let currentRenderedFrame = -1;
+    let targetFrame = 0;
+    let animFrameId = null;
 
-    function drawFrame(frameIndex) {
-      const img = imageCache.get(frameIndex);
-      if (!img) return;
-      if (!canvas || !glCtx) return;
-      const gl = glCtx;
+    // Render loop synced with browser refresh rate (60fps/120fps)
+    function render() {
+      if (targetFrame !== currentRenderedFrame) {
+        const img = imageCache.get(targetFrame);
+        if (img && img.complete && img.naturalWidth > 0) {
+          const cw = canvas.clientWidth;
+          const ch = canvas.clientHeight;
+          if (cw > 0 && ch > 0) {
+            // Keep canvas buffer matching display size
+            if (canvas.width !== cw || canvas.height !== ch) {
+              canvas.width = cw;
+              canvas.height = ch;
+            }
 
-      const cw = canvas.clientWidth;
-      const ch = canvas.clientHeight;
-      if (cw === 0 || ch === 0) return;
-      canvas.width = cw;
-      canvas.height = ch;
+            const ratio = img.naturalWidth / img.naturalHeight;
+            let dw = cw;
+            let dh = cw / ratio;
+            if (dh < ch) {
+              dh = ch;
+              dw = ch * ratio;
+            }
+            const dx = (cw - dw) * 0.5;
+            const dy = (ch - dh) * 0.5;
 
-      const ratio = img.naturalWidth / img.naturalHeight;
-      let dw = cw;
-      let dh = cw / ratio;
-      if (dh < ch) {
-        dh = ch;
-        dw = ch * ratio;
+            glCtx.imageSmoothingEnabled = true;
+            glCtx.imageSmoothingQuality = "high";
+            glCtx.drawImage(img, dx, dy, dw, dh);
+            currentRenderedFrame = targetFrame;
+          }
+        }
       }
-      let dx = (cw - dw) / 2;
-      let dy = (ch - dh) / 2;
-      gl.clearRect(0, 0, cw, ch);
-      gl.drawImage(img, dx, dy, dw, dh);
+      animFrameId = requestAnimationFrame(render);
+    }
+    animFrameId = requestAnimationFrame(render);
+
+    function trimCache(centerIndex) {
+      if (imageCache.size > MAX_CACHE_SIZE) {
+        for (const [key] of imageCache) {
+          if (Math.abs(key - centerIndex) > PRELOAD_AHEAD + 30) {
+            imageCache.delete(key);
+            if (imageCache.size <= MAX_CACHE_SIZE - 20) break;
+          }
+        }
+      }
     }
 
     function preloadFrame(index) {
@@ -81,26 +107,27 @@ function ScrollVideo() {
       img.onload = () => {
         imageCache.set(index, img);
         pendingLoads.delete(index);
-        if (index === 0 || index === currentFrame) drawFrame(index);
       };
       img.onerror = () => pendingLoads.delete(index);
       img.src = `${FRAME_PATH}${padFrameNumber(index + START_FRAME)}${FRAME_EXT}`;
     }
 
     function setFrame(frameIndex) {
-      if (frameIndex === currentFrame) return;
-      currentFrame = frameIndex;
+      targetFrame = frameIndex;
 
       preloadFrame(frameIndex);
-      drawFrame(frameIndex);
-
       for (let i = 1; i <= PRELOAD_AHEAD; i++) preloadFrame(frameIndex + i);
       for (let j = 1; j <= PRELOAD_BEHIND; j++) preloadFrame(frameIndex - j);
+      trimCache(frameIndex);
     }
 
-    for (let i = 0; i < PRELOAD_AHEAD + 4; i++) {
+    // Initial preloading of beginning frames
+    for (let i = 0; i < 40; i++) {
       preloadFrame(i);
     }
+
+    // Smooth scrub object for interpolated easing
+    const scrollObj = { frame: 0 };
 
     ctx = gsap.context(() => {
       ScrollTrigger.create({
@@ -109,23 +136,26 @@ function ScrollVideo() {
         end: "bottom bottom",
         pin: container,
         pinSpacing: false,
-        scrub: true,
+        scrub: 1.2, // Ultra-smooth momentum scrubbing
         onUpdate: (self) => {
-          const frameIndex = Math.min(
+          const destFrame = Math.min(
             TOTAL_FRAMES - 1,
             Math.max(0, Math.round(self.progress * (TOTAL_FRAMES - 1)))
           );
-          setFrame(frameIndex);
+          setFrame(destFrame);
         },
       });
     });
 
     const onResize = () => {
-      if (currentFrame >= 0) drawFrame(currentFrame);
+      if (currentRenderedFrame >= 0) {
+        currentRenderedFrame = -1; // Force repaint on next animation frame
+      }
     };
     window.addEventListener("resize", onResize);
 
     return () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
       window.removeEventListener("resize", onResize);
       if (ctx) ctx.revert();
       imageCache.clear();
@@ -134,7 +164,8 @@ function ScrollVideo() {
   }, []);
 
   return (
-    <div ref={wrapperRef} style={{ height: "1200vh", position: "relative" }}>
+    // Height set to 2400vh for comfortable, slow and controlled scroll reading speed
+    <div ref={wrapperRef} style={{ height: "2400vh", position: "relative" }}>
       <div
         ref={containerRef}
         style={{
@@ -144,9 +175,19 @@ function ScrollVideo() {
           position: "sticky",
           top: 0,
           left: 0,
+          willChange: "transform",
         }}
       >
-        <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} />
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
+          }}
+        />
       </div>
     </div>
   );
