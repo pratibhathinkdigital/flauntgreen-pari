@@ -39,4 +39,5 @@ public/assets/pristine/CAPSULE_LOOK/
 *.zip
 
 .opencode
-public/videos/*.mp4
+# public/videos/*.mp4
+!public/videos/flauntgreen.mp4
