@@ -1,4 +1,5 @@
-/* Fonts are loaded via Next.js font optimization in layout.js */
+/* Fonts loaded via Google Fonts CDN to ensure build servers (Hostinger) without internal Google Font download support build cleanly */
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Playwrite+AU+VIC:wght@400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,6 +9,10 @@
    CSS CUSTOM PROPERTIES (Design Tokens)
    ============================================= */
 :root {
+  --font-sans: 'Inter', 'Gill Sans', 'Gill Sans MT', Calibri, system-ui, sans-serif;
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-cabin: 'Cabin', sans-serif;
+  --font-playwrite-au-vic: 'Playwrite AU VIC', cursive;
   --brand-primary:   #41542f;
   --brand-light:     #759f5d;
   --brand-dark:      #1a2213;

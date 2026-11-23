@@ -1,35 +1,6 @@
 import "./globals.css";
-import { Cormorant_Garamond, Inter, Playwrite_AU_VIC, Cabin } from "next/font/google";
 import { Providers } from "@/providers";
 import { Toaster } from "react-hot-toast";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-const playwriteAuVic = Playwrite_AU_VIC({
-  subsets: ["latin"],
-  variable: "--font-playwrite-au-vic",
-  weight: "400",
-  display: "swap",
-});
-
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const cabin = Cabin({
-  subsets: ["latin"],
-  variable: "--font-cabin",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 export const metadata = {
   title: {
@@ -86,7 +57,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" dir="ltr" className={`${inter.variable} ${playwriteAuVic.variable} ${cormorantGaramond.variable} ${cabin.variable}`}>
+    <html lang="en" dir="ltr">
       <body className="font-sans antialiased min-h-screen">
         <Providers>
           {children}
