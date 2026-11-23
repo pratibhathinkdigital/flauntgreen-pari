@@ -39,3 +39,4 @@ public/assets/pristine/CAPSULE_LOOK/
 *.zip
 
 .opencode
+public/videos/*.mp4
