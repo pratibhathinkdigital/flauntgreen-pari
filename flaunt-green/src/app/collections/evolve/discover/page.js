@@ -84,7 +84,7 @@ export default function DiscoverEvolvePage() {
 
           {/* Center Play Button Overlay (when paused or before start) */}
           {(!isPlaying || !hasStarted) && (
-            <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/35 backdrop-blur-[1px]">
+            <div className="absolute inset-0 flex items-center justify-center z-10">
               <button
                 type="button"
                 onClick={(e) => {
@@ -99,30 +99,7 @@ export default function DiscoverEvolvePage() {
             </div>
           )}
 
-          {/* Minimal Play/Pause Control Button in bottom-left when active */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className={`absolute bottom-3 left-3 sm:bottom-4 sm:left-4 md:bottom-6 md:left-6 transition-opacity duration-300 z-30 ${
-              showControls || !isPlaying
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/60 hover:bg-[#997b47] backdrop-blur-md text-white flex items-center justify-center shadow-lg transition-all duration-200 border border-white/20"
-              aria-label={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-current" />
-              ) : (
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-current pl-0.5" />
-              )}
-            </button>
-          </div>
+
         </section>
       </main>
 
